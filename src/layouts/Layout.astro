@@ -1,5 +1,6 @@
 ---
 const { title } = Astro.props;
+import "../styles/global.css";
 ---
 
 <!doctype html>
@@ -8,8 +9,7 @@ const { title } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title ? `${title}` : "cntryl"}</title>
-    <link rel="icon" href="/logo.svg" />
-    <link rel="stylesheet" href="/src/styles/global.css" />
+  <link rel="icon" href="/logo.svg" />
   </head>
   <body class="min-h-screen text-gray-100 flex flex-col">
     <header class="bg-black/40 backdrop-blur-sm sticky top-0 z-50">

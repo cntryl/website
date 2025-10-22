@@ -15,8 +15,13 @@
     font-family: var(--font-sans);
     background:
       radial-gradient(
+        800px circle at 5% 5%,
+        rgba(255, 106, 0, 0.15),
+        transparent 30%
+      ),
+      radial-gradient(
         800px circle at 95% 95%,
-        rgba(255, 106, 0, 0.12),
+        rgba(255, 106, 0, 0.15),
         transparent 30%
       ),
       linear-gradient(180deg, #000000 0%, #050405 100%);
@@ -35,6 +40,6 @@
 
   .btn-outline {
     @apply border-2 border-brand text-brand px-6 py-3 rounded-lg font-medium transition-all duration-300;
-    @apply hover:bg-brand hover:text-white hover:shadow-2xl hover:shadow-brand/50 hover:scale-105;
+    @apply hover:bg-brand/20 hover:text-white hover:shadow-2xl hover:shadow-brand/50;
   }
 }
