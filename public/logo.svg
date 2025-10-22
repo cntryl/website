@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <style>
+      @keyframes orbit-logo {
+        from { transform: rotate(0deg) translateX(70px) rotate(0deg); }
+        to { transform: rotate(360deg) translateX(70px) rotate(-360deg); }
+      }
+      .logo-node1 { animation: orbit-logo 8s linear infinite; transform-origin: 100px 100px; }
+      .logo-node2 { animation: orbit-logo 12s linear infinite reverse; transform-origin: 100px 100px; }
+      .logo-node3 { animation: orbit-logo 10s linear infinite; transform-origin: 100px 100px; }
+      .logo-node4 { animation: orbit-logo 14s linear infinite reverse; transform-origin: 100px 100px; }
+    </style>
+    
+    <!-- Gradient for glow effect (softer, larger footprint) -->
+    <radialGradient id="glow" cx="100" cy="100" r="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" style="stop-color:#ff6a00;stop-opacity:0.6" />
+      <stop offset="50%" style="stop-color:#ff6a00;stop-opacity:0.20" />
+      <stop offset="100%" style="stop-color:#ff6a00;stop-opacity:0" />
+    </radialGradient>
+
+    <!-- Stronger blur for background glow to avoid banding/jagged edges -->
+    <filter id="background-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+
+    <filter id="glow-filter">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Subtle background glow (soft, not reaching edges) -->
+  <circle cx="100" cy="100" r="85" fill="url(#glow)" filter="url(#background-glow)"/>
+  
+  <!-- Orbital paths -->
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#ff6a00" stroke-width="0.5" opacity="0.15"/>
+  <circle cx="100" cy="100" r="60" fill="none" stroke="#ff6a00" stroke-width="0.5" opacity="0.12"/>
+  <circle cx="100" cy="100" r="50" fill="none" stroke="#ff6a00" stroke-width="0.5" opacity="0.10"/>
+  <circle cx="100" cy="100" r="40" fill="none" stroke="#ff6a00" stroke-width="0.5" opacity="0.08"/>
+  <circle cx="100" cy="100" r="30" fill="none" stroke="#ff6a00" stroke-width="0.5" opacity="0.06"/>
+  <circle cx="100" cy="100" r="20" fill="none" stroke="#ff6a00" stroke-width="0.5" opacity="0.05"/>
+  <circle cx="100" cy="100" r="10" fill="none" stroke="#ff6a00" stroke-width="0.5" opacity="0.04"/>
+  
+  <!-- Central "C" letter - simple arc (no local glow) -->
+  <g>
+    <!-- Simple C: large arc on the left, opening to the right -->
+    <path d="M 130 60 A 50 50 0 1 0 130 140" 
+          fill="none" 
+          stroke="#ff6a00" 
+          stroke-width="12" 
+          stroke-linecap="round"/>
+  </g>
+  
+  <!-- Orbiting nodes removed -->
+</svg>

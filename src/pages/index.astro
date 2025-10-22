@@ -1,0 +1,37 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+---
+
+<Layout title="Cntryl /fitz - If I fitz, I sitz, and I'm Fitz">
+  <style>
+    body {
+      overflow: hidden;
+    }
+  </style>
+  <!-- Hero Section -->
+  <div class="flex items-center justify-center h-[calc(100vh-120px)]">
+    <section class="text-center px-6 max-w-4xl mx-auto">
+      <h1 class="text-6xl md:text-7xl font-bold mb-6 tracking-tight">
+        <span
+          class="bg-gradient-to-r from-brand to-orange-600 bg-clip-text text-transparent"
+          >/Fitz</span
+        >
+      </h1>
+
+      <p class="text-xl md:text-2xl font-semibold text-white mb-4">
+        The messaging layer your system was missing
+      </p>
+
+      <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+        One unified message fabric for kv, streams, queues, rpc, notices, and
+        more. Fast, cloud-native, and designed for modern systems.
+      </p>
+
+      <a href="/features" class="btn-outline inline-flex items-center gap-2">
+        <Icon name="tabler:sparkles" class="w-5 h-5" />
+        Learn More
+      </a>
+    </section>
+  </div>
+</Layout>

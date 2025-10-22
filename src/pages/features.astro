@@ -1,0 +1,182 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+---
+
+<Layout title="Features - Fitz">
+  <div class="max-w-6xl mx-auto px-6 py-8 md:py-12">
+    <!-- Hero Section -->
+    <div class="mb-24 text-center">
+      <h1 class="text-4xl md:text-5xl font-bold mb-6 text-white">
+        Everything you need in one system
+      </h1>
+      <p class="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
+        A single, consistent API for all your messaging patterns. Fitz provides
+        streams, queues, rpc, notices, and inboxes through one unified platform.
+      </p>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-brand/20 mb-24"></div>
+
+    <!-- Icon + Copy Section 1 -->
+    <div class="grid md:grid-cols-2 gap-12 items-center mb-24">
+      <div class="flex justify-center">
+        <Icon name="tabler:topology-complex" class="w-48 h-48 text-brand" />
+      </div>
+      <div>
+        <h3 class="text-2xl font-semibold text-white mb-4">
+          Built for Modern Architectures
+        </h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          Fitz is built for modern architectures - from microservices to
+          serverless to embedded edge systems. It's transport-agnostic
+          (WebSocket and TCP today, QUIC later), storage-pluggable (local LSM,
+          S3, Azure, GCP, OCI), and tenant-aware with JWT-based security and
+          scoped routing.
+        </p>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-brand/20 mb-24"></div>
+
+    <!-- Icon + Copy Section 2 (Reversed) -->
+    <div class="grid md:grid-cols-2 gap-12 items-center mb-24">
+      <div class="order-2 md:order-1">
+        <h3 class="text-2xl font-semibold text-white mb-4">
+          Developer-First Design
+        </h3>
+        <p class="text-lg text-gray-300 leading-relaxed">
+          Developers get a single, consistent API for everything from ephemeral
+          notifications to durable event streams. Fitz simplifies messaging,
+          reduces operational complexity, and is designed to scale with your
+          systems.
+        </p>
+      </div>
+      <div class="flex justify-center order-1 md:order-2">
+        <Icon name="tabler:code" class="w-48 h-48 text-brand" />
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-brand/20 mb-20"></div>
+
+    <!-- Key features grid -->
+    <div class="mb-16">
+      <h2 class="text-3xl font-bold mb-8 text-white text-center">
+        Key Features
+      </h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div
+          class="p-6 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1">
+              <Icon
+                name="tabler:topology-star-ring-3"
+                class="w-6 h-6 text-brand"
+              />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">Multi-Modal</h3>
+              <p class="text-gray-400">
+                kv, streams, queues, rpc, notices, and more - all in one system.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="p-6 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1">
+              <Icon name="tabler:plug-connected" class="w-6 h-6 text-brand" />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">
+                Transport-Agnostic
+              </h3>
+              <p class="text-gray-400">
+                WebSocket and TCP today; QUIC planned later.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="p-6 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1">
+              <Icon name="tabler:database" class="w-6 h-6 text-brand" />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">
+                Storage-Pluggable
+              </h3>
+              <p class="text-gray-400">
+                Local LSM, object stores, or cloud-native backends.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="p-6 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1">
+              <Icon name="tabler:shield-lock" class="w-6 h-6 text-brand" />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">
+                Tenant-Aware
+              </h3>
+              <p class="text-gray-400">
+                JWT security and scoped routing built in.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="p-6 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1">
+              <Icon name="tabler:api" class="w-6 h-6 text-brand" />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">
+                One Consistent API
+              </h3>
+              <p class="text-gray-400">
+                Less operational overhead. Single SDK. Unified experience.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="p-6 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+        >
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 mt-1">
+              <Icon name="tabler:bolt" class="w-6 h-6 text-brand" />
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-2">
+                Built for Scale
+              </h3>
+              <p class="text-gray-400">
+                Designed to grow from edge devices to cloud infrastructure.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
