@@ -1,5 +1,15 @@
 ---
-const { title } = Astro.props;
+const { title, description, image } = Astro.props;
+
+const defaultTitle = "Cntryl /Fitz - The messaging layer your system was missing";
+const defaultDescription = "One unified message fabric for kv, streams, queues, rpc, notices, and more. Fast, cloud-native, and designed for modern systems.";
+const defaultImage = "/logo.svg";
+
+const pageTitle = title || defaultTitle;
+const pageDescription = description || defaultDescription;
+const pageImage = image || defaultImage;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
 import "../styles/global.css";
 import { ViewTransitions } from "astro:transitions";
 ---
@@ -9,8 +19,55 @@ import { ViewTransitions } from "astro:transitions";
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title ? `${title}` : "cntryl"}</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>{pageTitle}</title>
+    <meta name="title" content={pageTitle} />
+    <meta name="description" content={pageDescription} />
+    <meta name="keywords" content="messaging, message queue, stream processing, rpc, key-value store, distributed systems, cloud-native, microservices, event streaming" />
+    <meta name="author" content="cntryl" />
+    <link rel="canonical" href={canonicalURL} />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:image" content={new URL(pageImage, Astro.site)} />
+    <meta property="og:site_name" content="Cntryl" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={pageTitle} />
+    <meta property="twitter:description" content={pageDescription} />
+    <meta property="twitter:image" content={new URL(pageImage, Astro.site)} />
+    
+    <!-- Favicon -->
     <link rel="icon" href="/logo.svg" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#ff6a00" />
+    
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Cntryl Fitz",
+        "applicationCategory": "DeveloperApplication",
+        "description": "One unified message fabric for kv, streams, queues, rpc, notices, and more. Fast, cloud-native, and designed for modern systems.",
+        "url": "https://cntryl.com",
+        "operatingSystem": "Cross-platform",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+    
     <ViewTransitions />
   </head>
   <body class="min-h-screen text-gray-100 flex flex-col">

@@ -11,6 +11,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.6.0",
     "@iconify-json/tabler": "^1.2.23",
     "astro": "^5.14.8",
     "astro-icon": "^1.1.5"
