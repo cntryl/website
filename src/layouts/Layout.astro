@@ -9,7 +9,7 @@ import "../styles/global.css";
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title ? `${title}` : "cntryl"}</title>
-  <link rel="icon" href="/logo.svg" />
+    <link rel="icon" href="/logo.svg" />
   </head>
   <body class="min-h-screen text-gray-100 flex flex-col">
     <header class="bg-black/40 backdrop-blur-sm sticky top-0 z-50">
@@ -23,13 +23,6 @@ import "../styles/global.css";
         </a>
         <nav>
           <ul class="flex gap-6 text-sm">
-            <li>
-              <a
-                href="/features"
-                class="text-gray-300 hover:text-white transition-colors"
-                >Features</a
-              >
-            </li>
             <li>
               <a
                 href="https://github.com/cntryl"
@@ -62,15 +55,13 @@ import "../styles/global.css";
 
     <footer class="bg-black/40 backdrop-blur-sm mt-20">
       <div class="max-w-6xl mx-auto px-6 py-12">
-        <div
-          class="flex flex-col md:flex-row justify-between items-center gap-6"
-        >
-          <div class="flex items-center gap-2">
-            <img src="/logo.svg" alt="cntryl" class="h-8 w-8 opacity-50" />
-            <span class="text-sm text-gray-400"
-              >© {new Date().getFullYear()} cntryl. All rights reserved.</span
-            >
-          </div>
+        <div class="flex flex-col items-center gap-2 text-center">
+          <span class="text-sm text-gray-400">
+            &copy; {new Date().getFullYear()} cntryl All rights reserved.
+          </span>
+          <span class="text-xs text-gray-400">
+            If I fitz, I sitz, and I'm fitz
+          </span>
         </div>
       </div>
     </footer>
