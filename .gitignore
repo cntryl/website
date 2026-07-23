@@ -138,6 +138,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-# Astro build artifacts
-.astro/
+# Askr client and static output
+.askr/
 dist/

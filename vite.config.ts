@@ -1,0 +1,27 @@
+import { askr } from '@askrjs/vite';
+import type { PluginOption, UserConfig } from 'vite-plus';
+
+function askrPlugin(): PluginOption {
+  return askr() as unknown as PluginOption;
+}
+
+export default function config(): UserConfig {
+  return {
+    plugins: [askrPlugin()],
+    lint: {
+      ignorePatterns: ['.askr/**', 'dist/**', 'node_modules/**'],
+    },
+    fmt: {
+      semi: true,
+      singleQuote: true,
+      trailingComma: 'es5',
+      printWidth: 80,
+      tabWidth: 2,
+    },
+    build: {
+      outDir: '.askr/client',
+      emptyOutDir: true,
+      sourcemap: true,
+    },
+  };
+}

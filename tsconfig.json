@@ -1,19 +1,17 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": false,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@askrjs/askr",
     "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": [
-    "./astro.config.ts",
-    "./tailwind.config.ts",
-    "./postcss.config.ts",
-    "src/**/*"
-  ]
+  "include": ["src", "scripts", "tests", "ssg.config.ts", "vite.config.ts"],
+  "exclude": [".askr", "dist", "node_modules"]
 }
