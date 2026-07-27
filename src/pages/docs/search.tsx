@@ -218,25 +218,29 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
   // conditional. Passing a lazy target instead lets `on` resolve it, and it
   // already treats a missing `window` (during `askr ssg`) as "no target",
   // skipping the attach without evaluating the accessor at all.
-  on(() => window, 'keydown', (rawEvent: Event) => {
-    const event = rawEvent as KeyboardEvent;
-    const target = event.target;
-    const typing =
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLTextAreaElement;
-    if (
-      (event.key === 'k' && (event.metaKey || event.ctrlKey)) ||
-      (event.key === '/' && !typing)
-    ) {
-      event.preventDefault();
-      setOpen(true);
-      // Deliberately not a captured ref: the renderer re-invokes `ref` with
-      // null on every re-render, so a ref captured here is already null by
-      // the time this timeout runs.
-      window.setTimeout(focusSearchInput, 0);
+  on(
+    () => window,
+    'keydown',
+    (rawEvent: Event) => {
+      const event = rawEvent as KeyboardEvent;
+      const target = event.target;
+      const typing =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement;
+      if (
+        (event.key === 'k' && (event.metaKey || event.ctrlKey)) ||
+        (event.key === '/' && !typing)
+      ) {
+        event.preventDefault();
+        setOpen(true);
+        // Deliberately not a captured ref: the renderer re-invokes `ref` with
+        // null on every re-render, so a ref captured here is already null by
+        // the time this timeout runs.
+        window.setTimeout(focusSearchInput, 0);
+      }
+      if (event.key === 'Escape' && open()) dismiss();
     }
-    if (event.key === 'Escape' && open()) dismiss();
-  });
+  );
 
   return (
     <div class="docs-search">

@@ -1,4 +1,4 @@
-import { For } from '@askrjs/askr';
+import { For, Show } from '@askrjs/askr';
 import { currentRoute, Link } from '@askrjs/askr/router';
 import {
   Badge,
@@ -108,7 +108,7 @@ export function MarketingPage() {
           </section>
         )}
       </For>
-      {page.work.length > 0 ? (
+      <Show when={page.work.length > 0}>
         <section
           class="editorial-evidence"
           data-marketing-page={page.productId ?? 'ecosystem'}
@@ -118,11 +118,7 @@ export function MarketingPage() {
             <header class="section-heading">
               <h2 id="work-title">{page.workTitle}</h2>
             </header>
-            <Grid
-              class="evidence-grid"
-              columns={{ base: 1, md: 3 }}
-              gap="md"
-            >
+            <Grid class="evidence-grid" columns={{ base: 1, md: 3 }} gap="md">
               <For
                 each={list<{ title: string; body: string }>(page.work)}
                 by={(item) => item.title}
@@ -137,7 +133,7 @@ export function MarketingPage() {
             </Grid>
           </Container>
         </section>
-      ) : null}
+      </Show>
       {page.boundaries ? (
         <section class="editorial-band">
           <Container class="split-section" size="xl">

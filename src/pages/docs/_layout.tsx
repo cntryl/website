@@ -1,4 +1,4 @@
-import { For, type Props } from '@askrjs/askr';
+import { For, Show, type Props } from '@askrjs/askr';
 import { currentRoute, Link } from '@askrjs/askr/router';
 import {
   Container,
@@ -90,21 +90,28 @@ function TableOfContents() {
   const route = resolveDocsRoute(currentRoute());
   const page = docsByRoute.get(route as `/docs${string}`);
   const headings = page ? docsTableOfContents(page) : [];
-  if (!headings.length) return null;
 
+  // <Show>, not an early `return null`: this component persists across docs
+  // navigation (it's a sibling of {children} in DocsLayout, not remounted
+  // per route), so whether the <For> below runs can change from render to
+  // render — e.g. navigating from /docs (no matching page, no headings) to
+  // any specific doc page. An early return that skips the <For> some renders
+  // but not others is the same hook-order hazard <Show> exists to prevent.
   return (
-    <aside class="docs-toc" aria-label="On this page">
-      <p>On this page</p>
-      <ul>
-        <For each={list(headings)} by={(heading) => heading.id}>
-          {(heading) => (
-            <li>
-              <a href={`#${heading.id}`}>{heading.title}</a>
-            </li>
-          )}
-        </For>
-      </ul>
-    </aside>
+    <Show when={headings.length > 0}>
+      <aside class="docs-toc" aria-label="On this page">
+        <p>On this page</p>
+        <ul>
+          <For each={list(headings)} by={(heading) => heading.id}>
+            {(heading) => (
+              <li>
+                <a href={`#${heading.id}`}>{heading.title}</a>
+              </li>
+            )}
+          </For>
+        </ul>
+      </aside>
+    </Show>
   );
 }
 

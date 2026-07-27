@@ -67,9 +67,6 @@ export type DocsPageInput = {
   path: string;
   title: string;
   description: string;
-  contract: string;
-  practice: string;
-  boundary: string;
   keywords?: readonly string[];
   code?: string;
   table?: DocsTable;

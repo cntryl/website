@@ -1,4 +1,4 @@
-import { For, state } from '@askrjs/askr';
+import { Case, For, Match, Show, state } from '@askrjs/askr';
 import { currentRoute, Link } from '@askrjs/askr/router';
 import { GitHubLogo } from '@askrjs/logos';
 import { ArrowLeftIcon, ArrowRightIcon, CopyIcon } from '@askrjs/lucide';
@@ -22,9 +22,14 @@ import { list } from '../list';
 type CodeTab = NonNullable<DocsContentSection['codeTabs']>[number];
 
 export function CodeBlock({
+  id,
   code,
   codeTabs,
 }: {
+  // Scopes the tab-panel id to this instance. Without it, two code blocks on
+  // the same page that both happen to include a tab with the same id (e.g.
+  // "typescript") would render duplicate DOM ids.
+  id?: string;
   code?: string;
   codeTabs?: readonly CodeTab[];
 }) {
@@ -53,12 +58,15 @@ export function CodeBlock({
     });
   }
 
+  const panelId = (tabId: string) =>
+    id ? `code-panel-${id}-${tabId}` : `code-panel-${tabId}`;
+
   return (
     <div
       class={`code-block${codeTabs ? ' code-block--tabs' : ''}`}
       data-code-block
     >
-      {codeTabs ? (
+      <Show when={codeTabs}>
         <div class="code-block__tabs" role="tablist" aria-label="Code examples">
           <For each={tabs} by={(tab) => tab.id}>
             {(tab) => (
@@ -66,7 +74,7 @@ export function CodeBlock({
                 type="button"
                 role="tab"
                 aria-selected={tab.active}
-                aria-controls={`code-panel-${tab.id}`}
+                aria-controls={panelId(tab.id)}
                 variant="ghost"
                 size="xs"
                 class="code-block__tab"
@@ -78,7 +86,7 @@ export function CodeBlock({
             )}
           </For>
         </div>
-      ) : null}
+      </Show>
       <Button
         class="code-block__copy"
         type="button"
@@ -97,7 +105,7 @@ export function CodeBlock({
         <span>{copied() ? 'Copied' : 'Copy'}</span>
       </Button>
       <pre
-        id={codeTabs ? `code-panel-${selectedTab?.id ?? 'default'}` : undefined}
+        id={codeTabs ? panelId(selectedTab?.id ?? 'default') : undefined}
         role={codeTabs ? 'tabpanel' : undefined}
         aria-label={
           codeTabs ? `${selectedTab?.label ?? 'Code'} example` : undefined
@@ -155,7 +163,11 @@ function ContentSection({
       </For>
       {section.table ? <DataTable table={section.table} /> : null}
       {section.code || section.codeTabs ? (
-        <CodeBlock code={section.code} codeTabs={section.codeTabs} />
+        <CodeBlock
+          id={section.id}
+          code={section.code}
+          codeTabs={section.codeTabs}
+        />
       ) : null}
       {section.callout ? (
         <aside class="docs-callout">
@@ -273,32 +285,48 @@ export function DocsHome() {
 
 export function DocsPage() {
   const route = resolveDocsRoute(currentRoute());
-  if (route === '/docs') return <DocsHome />;
-  const page = docsByRoute.get(route as `/docs${string}`);
-  if (!page) {
-    return (
-      <article class="docs-article">
-        <h1>Documentation page not found</h1>
-      </article>
-    );
-  }
+  const page =
+    route === '/docs' ? undefined : docsByRoute.get(route as `/docs${string}`);
 
-  const portal = portalById.get(page.portalId)!;
+  // <Case>/<Match>, not early returns: DocsPage persists across docs
+  // navigation, so which branch renders (index, a real page, not-found) can
+  // change from render to render. An early return that skips the <For> below
+  // some renders but not others is the hook-order hazard <Case> exists to
+  // prevent — see the same reasoning on TableOfContents in _layout.tsx.
   return (
-    <article class="docs-article" data-docs-route={page.route}>
-      <header class="docs-article__header">
-        <h1>{page.title}</h1>
-        <p>{page.description}</p>
-        <a class="source-link" href={portal.repository}>
-          <GitHubLogo size={15} aria-hidden="true" />
-          Source repository
-        </a>
-      </header>
-      <For each={list(page.content)} by={(content) => content.id}>
-        {(content) => <ContentSection section={content} />}
-      </For>
-      <PreviousNext page={page} />
-    </article>
+    <Case
+      fallback={
+        <article class="docs-article">
+          <h1>Documentation page not found</h1>
+        </article>
+      }
+    >
+      <Match when={route === '/docs'}>
+        <DocsHome />
+      </Match>
+      <Match when={page}>
+        {() => {
+          const current = page!;
+          const portal = portalById.get(current.portalId)!;
+          return (
+            <article class="docs-article" data-docs-route={current.route}>
+              <header class="docs-article__header">
+                <h1>{current.title}</h1>
+                <p>{current.description}</p>
+                <a class="source-link" href={portal.repository}>
+                  <GitHubLogo size={15} aria-hidden="true" />
+                  Source repository
+                </a>
+              </header>
+              <For each={list(current.content)} by={(content) => content.id}>
+                {(content) => <ContentSection section={content} />}
+              </For>
+              <PreviousNext page={current} />
+            </article>
+          );
+        }}
+      </Match>
+    </Case>
   );
 }
 

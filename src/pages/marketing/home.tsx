@@ -43,15 +43,18 @@ export function HomePage() {
     <>
       <section class="home-hero" aria-labelledby="home-title">
         <Container size="xl">
+          <p class="editorial-hero__label">
+            Three products, one embedded engine
+          </p>
           <h1 id="home-title">
             Storage in your cloud. Runtime you can throw away.
           </h1>
           <p class="home-hero__lede">
-            Midge is an embedded storage engine that keeps its data in S3,
-            Azure Blob, or GCS. Fitz embeds it to run a broker, cache, job
-            queue, and scheduler as one process instead of four. Cassie
-            embeds it to run a real SQL database for your event log's read
-            side. None of them store your data in the container.
+            Midge is an embedded storage engine that keeps its data in S3, Azure
+            Blob, or GCS. Fitz embeds it to run a broker, cache, job queue, and
+            scheduler as one process instead of four. Cassie embeds it to run a
+            real SQL database for your event log's read side. None of them store
+            your data in the container.
           </p>
           <div class="hero-actions">
             <Button asChild>
@@ -121,8 +124,8 @@ export function HomePage() {
                 Askr is the full-stack application framework these products were
                 built to sit under. An Askr app can talk to Fitz and query
                 Cassie, with storage, communication, and read models staying
-                infrastructure you run yourself rather than a hosted service
-                you rent.
+                infrastructure you run yourself rather than a hosted service you
+                rent.
               </p>
               <Button asChild>
                 <a href="https://askrjs.com">Go to askrjs.com</a>

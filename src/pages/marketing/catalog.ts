@@ -156,8 +156,9 @@ tx.commit(WriteOptions::sync())?;`,
     title: 'Broker, cache, job queue, and scheduler in one process | Fitz',
     description:
       'Fitz is one broker that replaces your cache, queue, and scheduler, with durable data in S3, Azure Blob, or GCS instead of on the box.',
-    headline: 'Your broker, cache, job queue, and scheduler, all in one process.',
-    lede: "Consolidating those usually means the guarantees blur together: the cache becomes the queue, the queue becomes the event log, and nobody can say anymore what survives a restart. Fitz doesn't blur: each kind of message keeps its own promise, in one broker.",
+    headline:
+      'Your broker, cache, job queue, and scheduler, all in one process.',
+    lede: "Fitz is a message broker that also runs your cache, job queue, and scheduler, all as one process instead of four. Consolidating those usually means the guarantees blur together: the cache becomes the queue, the queue becomes the event log, and nobody can say anymore what survives a restart. Fitz doesn't blur: each kind of message keeps its own promise, in one broker.",
     audience:
       "One process, but not one box's worth of data: durable domains live in S3, Azure Blob, or GCS, and the container holds only a cache. Scaling is a resize, not a migration.",
     workTitle: 'What one broker gets you',
@@ -220,14 +221,14 @@ tx.commit(WriteOptions::sync())?;`,
     description:
       'Cassie is a database with the PostgreSQL wire protocol: you create the schema, tables, and views, replay your event log into them, and query the result with psql, an existing driver, or a BI tool.',
     headline: 'Point psql at your event log.',
-    lede: "Cassie is a database, not a magic materializer. You create the schema, the tables, and the views. Your handler replays your event log into them. Cassie stores the rows and serves them over the PostgreSQL wire protocol, so the driver and BI tool already in your stack just connect.",
+    lede: 'Cassie is a database, not a magic materializer. You create the schema, the tables, and the views. Your handler replays your event log into them. Cassie stores the rows and serves them over the PostgreSQL wire protocol, so the driver and BI tool already in your stack just connect.',
     audience:
       'For teams doing CQRS or event sourcing who want their read side to be a database they query like any other, without operating a separate cluster to hold a derived copy.',
     what: {
       title: 'You push events in, and Cassie never reaches out',
       href: '/docs/cassie/projections-and-replay',
       linkLabel: 'Projections and replay',
-      body: 'There is no ingestion pipeline to operate and no stream for Cassie to poll. Your handler reads your event log and calls a local replay API with a batch of events, writing into the tables you defined. Three rules apply, each guarded on the Cassie side: events arrive in increasing order, or Cassie rejects the position. Each event carries a stable id, and Cassie skips ids it has already seen. Payloads are deterministic, because Cassie persists exactly what it is handed.',
+      body: "Skip the pipeline you'd otherwise build to keep a read model in sync: a CDC tool, a consumer, a materialized-view table. There is no ingestion pipeline to operate and no stream for Cassie to poll. Your handler reads your event log and calls a local replay API with a batch of events, writing into the tables you defined. Three rules apply, each guarded on the Cassie side: events arrive in increasing order, or Cassie rejects the position. Each event carries a stable id, and Cassie skips ids it has already seen. Payloads are deterministic, because Cassie persists exactly what it is handed.",
     },
     workTitle: 'A database you set up and query like any other',
     fit: {
@@ -254,7 +255,7 @@ tx.commit(WriteOptions::sync())?;`,
       title: 'Cassie is a database, not the source of truth',
       href: '/docs/cassie/product-boundaries',
       linkLabel: 'Product boundaries',
-      body: "Cassie is not your event stream, not an OLTP database for application writes, and not a distributed SQL engine. Replication, sharding, consensus, and cross-node planning are permanent non-goals. It does not store the source log, choose batch boundaries, resolve a timestamp or generated id on your behalf, or design your schema for you. You create the tables and views; Cassie executes your SQL against them and owns everything between a submitted query and its result. Your event log stays authoritative. Cassie holds a derived copy, not the record.",
+      body: 'Cassie is not your event stream, not an OLTP database for application writes, and not a distributed SQL engine. Replication, sharding, consensus, and cross-node planning are permanent non-goals. It does not store the source log, choose batch boundaries, resolve a timestamp or generated id on your behalf, or design your schema for you. You create the tables and views; Cassie executes your SQL against them and owns everything between a submitted query and its result. Your event log stays authoritative. Cassie holds a derived copy, not the record.',
     },
     next: {
       title: 'Run the local read-model example and query it.',
