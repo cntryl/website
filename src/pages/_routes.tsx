@@ -1,8 +1,9 @@
 import { createRouteRegistry, group, lazy, route } from '@askrjs/askr/router';
 import type { RouteMeta } from '@askrjs/askr/router';
 import { DocsLayout } from './docs/_layout';
-import { docsCatalog } from './docs/catalog';
+import { docsCatalog, portalById } from './docs/catalog';
 import { DocsHome } from './docs/page';
+import { MarketingLayout } from './marketing/_layout';
 import {
   marketingRouteMetadata,
   registerMarketingRoutes,
@@ -23,16 +24,24 @@ export const routeMetadata: Readonly<Record<string, RouteMeta>> = {
       page.route,
       metadataForRoute(
         page.route,
-        `${page.title} | ${page.portalId[0]!.toUpperCase() + page.portalId.slice(1)} | Cntryl`,
+        `${page.title} | ${portalById.get(page.portalId)!.label} | Cntryl`,
         page.description
       ),
     ])
   ),
 };
 
-function registerDocsRoutes() {
-  group({ layout: DocsLayout }, () => {
+// The docs index is a product chooser, not a product guide, so it uses the
+// marketing layout. Only a product's own pages get that product's sidebar.
+function registerDocsIndexRoute() {
+  group({ layout: MarketingLayout }, () => {
     route('/docs', DocsHome, { meta: routeMetadata['/docs'] });
+  });
+}
+
+function registerDocsRoutes() {
+  registerDocsIndexRoute();
+  group({ layout: DocsLayout }, () => {
     for (const page of docsCatalog) {
       route(page.route, lazy(page.loader), {
         meta: routeMetadata[page.route],
@@ -56,8 +65,8 @@ export async function createStaticRouteRegistry() {
 
   const registry = createRouteRegistry(() => {
     registerMarketingRoutes();
+    registerDocsIndexRoute();
     group({ layout: DocsLayout }, () => {
-      route('/docs', DocsHome, { meta: routeMetadata['/docs'] });
       for (const page of docsCatalog) {
         let component = components.get(page.loader);
         if (!component) {

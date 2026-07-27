@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { docsCatalog } from '../src/pages/docs/catalog';
+import { docsCatalog, docsPortals } from '../src/pages/docs/catalog';
 import { routeMetadata } from '../src/pages/_routes';
 import { marketingPages } from '../src/pages/marketing/catalog';
 import { SITE_URL } from '../src/pages/metadata';
@@ -29,7 +29,8 @@ const expectations = [
   })),
   ...docsRoutes.map((route) => ({
     route,
-    layout: 'docs',
+    // The docs index is a product chooser and renders in the marketing layout.
+    layout: route === '/docs' ? 'marketing' : 'docs',
     headings:
       route === '/docs'
         ? ['search', 'choose-product']
@@ -44,9 +45,16 @@ const retiredRoutes = [
   '/docs/fitz-typescript',
   '/docs/fitz-go',
   '/docs/fitz/quick-start',
-  '/docs/fitz/getting-started',
+  '/docs/fitz/setup',
+  '/docs/fitz/overview',
+  '/docs/fitz/client-selection',
+  // Client usage lives on each domain page, not in per-language portals.
+  '/docs/fitz/clients/typescript',
+  '/docs/fitz/clients/go',
   '/docs/cassie/quick-start',
   '/docs/midge/quick-start',
+  // No portal carries an FAQ; questions belong on the page that owns the topic.
+  '/docs/midge/faq',
 ];
 
 assert(existsSync(dist), 'dist/ is missing');
@@ -133,8 +141,10 @@ for (const expectation of expectations) {
   const nativeButtons = [...html.matchAll(/<button\b[^>]*>/g)].map(
     (match) => match[0]
   );
+  // Themed parts carry their own slot (button, sidebar-trigger, sidebar-rail);
+  // a slotless native button means markup that skipped the theme.
   assert(
-    nativeButtons.every((button) => button.includes('data-slot="button"')),
+    nativeButtons.every((button) => button.includes('data-slot="')),
     `${expectation.route} contains a button outside the Askr theme contract`
   );
 
@@ -159,7 +169,7 @@ for (const expectation of expectations) {
   if (expectation.layout === 'docs') {
     for (const marker of [
       'Search docs',
-      'Open documentation navigation',
+      'Toggle documentation navigation',
       'On this page',
       'docs-pagination',
       `data-docs-route="${expectation.route}"`,
@@ -172,34 +182,29 @@ for (const expectation of expectations) {
         `${expectation.route} is missing docs marker: ${marker}`
       );
     }
-    for (const navigationGroup of ['Midge', 'Cassie', 'Fitz', 'Other']) {
-      assert(
-        html.includes(navigationGroup),
-        `${expectation.route} is missing unified docs group: ${navigationGroup}`
-      );
-    }
+    // A product page shows only its own product in the sidebar.
+    const owner = docsPortals.find(
+      (portal) =>
+        expectation.route === portal.route ||
+        expectation.route.startsWith(`${portal.route}/`)
+    );
+    assert(
+      owner !== undefined && html.includes(owner.label),
+      `${expectation.route} is missing its sidebar product label`
+    );
     assert(
       html.includes('data-docs-sidebar="unified"'),
       `${expectation.route} is missing the unified sidebar contract`
     );
-    for (const portalRoute of [
-      '/docs/midge',
-      '/docs/cassie',
-      '/docs/fitz',
-      '/docs/stress',
-      '/docs/tools',
-    ]) {
+    // Every product is reachable from the top tabs on every docs page.
+    for (const portalRoute of docsPortals.map((portal) => portal.route)) {
       assert(
         html.includes(`href="${portalRoute}"`),
-        `${expectation.route} is missing sidebar product link ${portalRoute}`
+        `${expectation.route} is missing product tab ${portalRoute}`
       );
     }
-    if (expectation.route !== '/docs') {
-      assert(
-        html.includes('aria-label="Breadcrumb"'),
-        `${expectation.route} is missing breadcrumbs`
-      );
-    }
+    // Location is shown by the active tab and sidebar, so there is no
+    // breadcrumb row to assert.
     const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]!);
     assert(
       new Set(ids).size === ids.length,
@@ -285,7 +290,6 @@ assert(
   sitemapRoutes.size === expectedRoutes.size - 1,
   'sitemap must contain every indexable route exactly once'
 );
-assert(sitemapRoutes.size === 29, 'sitemap must contain exactly 29 routes');
 assert(existsSync(resolve(dist, '404.html')), 'Pages fallback is missing');
 assert(read('404.html') === read('404/index.html'), '404.html must match /404');
 

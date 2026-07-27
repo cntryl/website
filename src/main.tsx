@@ -5,16 +5,14 @@ async function main() {
   const root = document.getElementById('app');
   if (!root) throw new Error('Missing #app root element.');
 
-  const registry = window.location.pathname.startsWith('/docs')
-    ? (await import('./pages/_routes')).routeRegistry
-    : (await import('./pages/marketing/_routes')).marketingRouteRegistry;
+  const { routeRegistry } = await import('./pages/_routes');
 
   if (root.childNodes.length > 0) {
-    await hydrateSPA({ root, registry });
+    await hydrateSPA({ root, registry: routeRegistry });
     return;
   }
 
-  await createSPA({ root, registry });
+  await createSPA({ root, registry: routeRegistry });
 }
 
 void main();

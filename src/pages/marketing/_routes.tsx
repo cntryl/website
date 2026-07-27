@@ -15,8 +15,8 @@ import { metadataForRoute } from '../metadata';
 export const marketingRouteMetadata: Readonly<Record<string, RouteMeta>> = {
   '/': metadataForRoute(
     '/',
-    'Cntryl | Application communication, read models, and embedded storage',
-    'Cntryl tools simplify application communication, queryable read models, and embedded storage with explicit ownership and recovery.'
+    'Cntryl | Embedded storage, one broker, and SQL over your event log',
+    'Midge embeds storage in your process and can back it with S3, Azure Blob, or GCS. Fitz is one broker instead of four systems. Cassie makes your event log queryable with SQL.'
   ),
   '/404': metadataForRoute(
     '/404',

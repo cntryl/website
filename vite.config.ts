@@ -23,5 +23,13 @@ export default function config(): UserConfig {
       emptyOutDir: true,
       sourcemap: true,
     },
+    server: {
+      watch: {
+        // Running a production build (dist/, .askr/) alongside `vp dev` would
+        // otherwise make the dev server treat generated output as source
+        // changes and force-reload every connected tab mid-session.
+        ignored: ['**/dist/**', '**/.askr/**'],
+      },
+    },
   };
 }

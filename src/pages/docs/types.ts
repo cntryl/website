@@ -11,6 +11,11 @@ export type DocsContentSection = {
   title: string;
   paragraphs: readonly string[];
   code?: string;
+  codeTabs?: readonly {
+    id: string;
+    label: string;
+    code: string;
+  }[];
   table?: DocsTable;
   callout?: {
     title: string;
@@ -72,7 +77,7 @@ export type DocsPageInput = {
     title: string;
     body: string;
   };
-  content?: readonly DocsContentSection[];
+  content: readonly DocsContentSection[];
 };
 
 export type DocsSectionInput = {

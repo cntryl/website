@@ -1,261 +1,144 @@
-import { state, type Props } from '@askrjs/askr';
+import { For, type Props } from '@askrjs/askr';
 import { currentRoute, Link } from '@askrjs/askr/router';
-import { GitHubLogo } from '@askrjs/logos';
 import {
-  BookOpenIcon,
-  MenuIcon,
-  PanelLeftCloseIcon,
-  PanelLeftOpenIcon,
-  XIcon,
-} from '@askrjs/lucide';
-import { Button } from '@askrjs/themes/components';
-import { ThemeScope } from '@askrjs/themes/theme';
+  Container,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarScope,
+  SidebarTrigger,
+} from '@askrjs/themes/components';
 import {
   docsByRoute,
-  docsNavigationGroups,
+  docsPortals,
   docsTableOfContents,
   portalForRoute,
   resolveDocsRoute,
 } from './catalog';
-import { DocsSearch } from './search';
-import { CntrylBrand, SiteThemeToggle } from '../marketing/_layout';
+import { DocsProductBar } from './product-bar';
+import { SiteLayout } from '../site-layout';
+import { list } from '../list';
 
-const STORAGE_KEY = 'cntryl-docs-sidebar-collapsed';
-const adoptedShells = new WeakSet<HTMLElement>();
+// Products are the top-level tabs; the sidebar covers only the active one.
+function activePortalFor(path: string) {
+  return portalForRoute(path) ?? docsPortals[0];
+}
 
-function DocsNavigation({
-  collapsed = false,
-  close,
-}: {
-  collapsed?: boolean;
-  close?: () => void;
-}) {
+function DocsNavigation({ close }: { close?: () => void }) {
   const activePath = resolveDocsRoute(currentRoute());
-  const activePortal = portalForRoute(activePath);
-  if (collapsed) {
-    return (
-      <nav class="docs-nav docs-nav--collapsed" aria-label="Documentation">
-        <Link href="/docs" onClick={close} aria-label="Documentation home">
-          <BookOpenIcon size={18} aria-hidden="true" />
-        </Link>
-      </nav>
-    );
+  const portal = activePortalFor(activePath);
+
+  // Rebuilt every render so each entry's `active` flag travels with the item
+  // identity For reconciles on. For does not re-invoke its children function
+  // for stable item identities, and the catalog sections/pages are module-level
+  // constants, so comparing against `activePath` from the closure would freeze
+  // the highlight on whichever page was open when the sidebar first mounted.
+  const groups: {
+    id: string;
+    label: string;
+    pages: { route: string; title: string; active: boolean }[];
+  }[] = [];
+  for (const section of portal.sections) {
+    const pages: { route: string; title: string; active: boolean }[] = [];
+    for (const page of section.pages) {
+      pages.push({
+        route: page.route,
+        title: page.title,
+        active: page.route === activePath,
+      });
+    }
+    groups.push({ id: section.id, label: section.label, pages });
   }
 
   return (
-    <nav
-      class="docs-nav"
-      data-docs-sidebar="unified"
-      aria-label="Product documentation"
-    >
-      <Link class="docs-nav__home" href="/docs" onClick={close}>
-        <BookOpenIcon size={18} aria-hidden="true" />
-        <span>Documentation</span>
-      </Link>
-      {docsNavigationGroups.map((group) => {
-        const isOther = group.label === 'Other';
-        return (
-          <section class="docs-nav__group" key={group.label}>
-            {isOther ? (
-              <p class="docs-nav__group-label">{group.label}</p>
-            ) : null}
-            {group.portals.map((portal) => {
-              return (
-                <div
-                  class="docs-nav__product"
-                  key={portal.id}
-                  data-nav-product={portal.id}
-                >
-                  <Link
-                    class={
-                      isOther
-                        ? 'docs-nav__product-link'
-                        : 'docs-nav__group-link'
-                    }
-                    href={portal.route}
-                    aria-current={
-                      activePath === portal.route ? 'page' : undefined
-                    }
-                    onClick={close}
-                  >
-                    {portal.label}
-                  </Link>
-                </div>
-              );
-            })}
-          </section>
-        );
-      })}
-      {activePortal ? (
-        <section
-          class="docs-nav__pages"
-          data-nav-pages={activePortal.id}
-          aria-label={`${activePortal.label} pages`}
-        >
-          <p>{activePortal.label} pages</p>
-          {activePortal.sections.map((section) => (
-            <div class="docs-nav__page-section" key={section.id}>
-              <p>{section.label}</p>
-              <ul>
-                {section.pages.map((page) => (
-                  <li key={page.route}>
-                    <Link
-                      href={page.route}
-                      aria-current={
-                        page.route === activePath ? 'page' : undefined
-                      }
-                      onClick={close}
-                    >
-                      {page.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </section>
-      ) : null}
-    </nav>
+    <For each={groups} by={(section) => section.id}>
+      {(section) => (
+        <SidebarGroup data-nav-section={section.id}>
+          <SidebarGroupLabel>{section.label}</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <For each={section.pages} by={(page) => page.route}>
+                {(page) => (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild size="sm" active={page.active}>
+                      <Link
+                        href={page.route}
+                        aria-current={page.active ? 'page' : undefined}
+                        onPress={close}
+                      >
+                        {page.title}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </For>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      )}
+    </For>
   );
 }
 
 function TableOfContents() {
   const route = resolveDocsRoute(currentRoute());
   const page = docsByRoute.get(route as `/docs${string}`);
-  const headings = page
-    ? docsTableOfContents(page)
-    : route === '/docs'
-      ? [
-          { id: 'search', title: 'Search all products' },
-          { id: 'choose-product', title: 'Choose a product' },
-        ]
-      : [];
+  const headings = page ? docsTableOfContents(page) : [];
+  if (!headings.length) return null;
 
   return (
     <aside class="docs-toc" aria-label="On this page">
       <p>On this page</p>
       <ul>
-        {headings.map((heading) => (
-          <li key={heading.id}>
-            <a href={`#${heading.id}`}>{heading.title}</a>
-          </li>
-        ))}
+        <For each={list(headings)} by={(heading) => heading.id}>
+          {(heading) => (
+            <li>
+              <a href={`#${heading.id}`}>{heading.title}</a>
+            </li>
+          )}
+        </For>
       </ul>
     </aside>
   );
 }
 
 export function DocsLayout({ children }: Props) {
-  const [collapsed, setCollapsedState] = state(false);
-  const [drawerOpen, setDrawerOpen] = state(false);
-  const setCollapsed = (value: boolean) => {
-    setCollapsedState(value);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, String(value));
-    } catch {}
-  };
+  const activePath = resolveDocsRoute(currentRoute());
+  const portal = activePortalFor(activePath);
 
+  // The product bar and sidebar are docs chrome inside the shared shell, not a
+  // layout of their own.
   return (
-    <ThemeScope defaultTheme="light" storageKey="cntryl-theme">
-      <div
-        class="docs-shell"
-        data-layout="docs"
-        data-sidebar-collapsed={collapsed() ? 'true' : 'false'}
-        ref={(element: HTMLElement | null) => {
-          if (!element || adoptedShells.has(element)) return;
-          adoptedShells.add(element);
-          try {
-            setCollapsedState(
-              window.localStorage.getItem(STORAGE_KEY) === 'true'
-            );
-          } catch {}
-          window.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') setDrawerOpen(false);
-          });
-        }}
-      >
-        <aside class="docs-sidebar">
-          <header>
-            {!collapsed() ? <CntrylBrand /> : null}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={
-                collapsed()
-                  ? 'Expand docs navigation'
-                  : 'Collapse docs navigation'
-              }
-              aria-pressed={collapsed()}
-              onPress={() => setCollapsed(!collapsed())}
+    <SiteLayout variant="docs" portalId={portal.id}>
+      <DocsProductBar />
+      <Container size="xl" class="docs-channel">
+        <SidebarScope class="docs-scope">
+          <Sidebar collapsible="offcanvas">
+            <SidebarContent
+              data-docs-sidebar="unified"
+              data-nav-product={portal.id}
             >
-              {collapsed() ? (
-                <PanelLeftOpenIcon size={18} aria-hidden="true" />
-              ) : (
-                <PanelLeftCloseIcon size={18} aria-hidden="true" />
-              )}
-            </Button>
-          </header>
-          {!collapsed() ? <DocsSearch /> : null}
-          <DocsNavigation collapsed={collapsed()} />
-          <footer>
-            <Button asChild variant="ghost" size="icon">
-              <a
-                href="https://github.com/cntryl"
-                aria-label="Cntryl on GitHub"
-                title="GitHub"
-              >
-                <GitHubLogo size={18} aria-hidden="true" />
-              </a>
-            </Button>
-            <SiteThemeToggle />
-          </footer>
-        </aside>
-        <header class="docs-mobile-header">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Open documentation navigation"
-            aria-expanded={drawerOpen()}
-            onPress={() => setDrawerOpen(true)}
-          >
-            <MenuIcon size={20} aria-hidden="true" />
-          </Button>
-          <CntrylBrand />
-          <DocsSearch />
-          <SiteThemeToggle />
-        </header>
-        {drawerOpen() ? (
-          <div
-            class="docs-drawer-backdrop"
-            role="presentation"
-            onClick={(event: Event) => {
-              if (event.target === event.currentTarget) setDrawerOpen(false);
-            }}
-          >
-            <aside class="docs-drawer">
-              <header>
-                <CntrylBrand />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Close documentation navigation"
-                  onPress={() => setDrawerOpen(false)}
-                >
-                  <XIcon size={20} aria-hidden="true" />
-                </Button>
-              </header>
-              <DocsNavigation close={() => setDrawerOpen(false)} />
-            </aside>
-          </div>
-        ) : null}
-        <main class="docs-main">
-          <div class="docs-content">{children}</div>
-        </main>
-        <TableOfContents />
-      </div>
-    </ThemeScope>
+              <DocsNavigation />
+            </SidebarContent>
+          </Sidebar>
+          <SidebarInset class="docs-main">
+            <div class="docs-mobile-bar">
+              <SidebarTrigger aria-label="Toggle documentation navigation" />
+              <span>{portal.label} documentation</span>
+            </div>
+            <div class="docs-body">
+              <div class="docs-content">{children}</div>
+              <TableOfContents />
+            </div>
+          </SidebarInset>
+        </SidebarScope>
+      </Container>
+    </SiteLayout>
   );
 }

@@ -1,15 +1,27 @@
+// A callout links to the docs page that owns its topic when one exists.
+import type { DocsPortalId } from '../docs/types';
+
+export type MarketingCallout = {
+  title: string;
+  body: string;
+  href?: string;
+  linkLabel?: string;
+};
+
 export type MarketingPageDefinition = {
   path: `/${string}`;
+  productId?: DocsPortalId;
   label: string;
   title: string;
   description: string;
   headline: string;
   lede: string;
   audience: string;
-  what: { title: string; body: string };
-  fit: { title: string; body: string };
+  workTitle: string;
+  what?: MarketingCallout;
+  fit: MarketingCallout;
   work: readonly { title: string; body: string }[];
-  boundaries: { title: string; body: string };
+  boundaries?: MarketingCallout;
   next: {
     title: string;
     primaryHref: string;
@@ -17,179 +29,232 @@ export type MarketingPageDefinition = {
     secondaryHref: string;
     secondaryLabel: string;
     repository?: string;
+    code?: string;
+    // Names what the sample actually shows, so a local example cannot read as
+    // a contradiction of a page that sells cloud-backed storage.
+    codeCaption?: string;
   };
 };
 
 export const marketingPages = [
   {
     path: '/ecosystem',
-    label: 'Ecosystem',
-    title: 'The Cntryl ecosystem',
+    productId: undefined,
+    label: 'How it works',
+    title: 'One storage engine, three ways to use it | Cntryl',
     description:
-      'See how three focused Cntryl products support embedded storage, application messaging, and queryable read models.',
-    headline: 'Choose the part that fits your application.',
-    lede: 'Cntryl includes three runtime products. Each can be adopted on its own.',
+      'Midge is the storage engine Fitz and Cassie both embed. See what each product owns, what your application still owns, and which one to start with.',
+    headline: 'One storage engine. Three ways to use it.',
+    lede: 'Midge is an embedded engine that links into a process: no server, no port, no network hop. Fitz embeds it to run a broker. Cassie embeds it to run a queryable database. You can embed it yourself.',
     audience:
-      'For application and platform teams choosing a clear system boundary.',
+      'Start here to decide which product to adopt first, and see what each one takes off your plate.',
+    workTitle: 'Three jobs, one engine underneath',
     what: {
-      title: 'Three products with clear roles',
-      body: 'Midge provides embedded Rust storage. Fitz provides messaging and coordination through one broker. Cassie provides SQL-queryable read models.',
+      title: 'Nothing here is a second storage system',
+      href: '/midge',
+      linkLabel: 'How Midge works',
+      body: 'Fitz and Cassie both depend on cntryl-midge for storage. Midge owns write-ahead logging, flush, compaction, and restart recovery. Neither product ships a storage layer of its own. Adopting a second Cntryl product does not add a second thing to back up, tune, or reason about at 3am.',
     },
     fit: {
-      title: 'Adopt one product or several',
-      body: 'Start with the capability you need. Cassie uses Midge for storage. Fitz is independently useful and does not require Cassie or Midge in an application.',
+      title: 'The container is not where your data lives',
+      href: '/docs',
+      linkLabel: 'Browse the documentation',
+      body: 'Run Fitz for application communication without adopting Cassie. Point Midge at S3, Azure Blob, or GCS and the broker keeps only a local cache. Resizing the container moves no data. Cassie uses Midge as a local directory instead, but everything in that directory is derived: your event log rebuilds it by replay. Losing the process costs you a restart, not your data.',
     },
     work: [
       {
-        title: 'Midge owns embedded storage',
-        body: 'Midge stores application-owned data inside a Rust process with explicit durability and recovery choices.',
+        title: 'Store data inside your process',
+        body: 'Midge gives a Rust application durable state with no database server to run, and a durability choice on every single commit.',
       },
       {
-        title: 'Fitz connects applications',
-        body: 'Fitz provides messaging and coordination models through one broker boundary.',
+        title: 'Connect running applications',
+        body: 'Fitz is one broker instead of a cache, a queue, and a scheduler: live updates, durable history, shared state, and background work, all over one connection.',
       },
       {
-        title: 'Cassie serves read models',
-        body: 'Cassie builds queryable projection data from application-owned history and uses Midge for storage.',
+        title: 'Query what your application already produced',
+        body: 'You define the tables, your handler replays your event log into them, and you query the result with psql, an existing driver, or a BI tool.',
       },
     ],
     boundaries: {
-      title: 'The products stay independent',
-      body: 'Cntryl is not a required stack. Fitz does not depend on Cassie or application-managed Midge. Applications can also adopt Midge without Cassie.',
+      title: 'One writer each, and your application owns the truth',
+      body: 'None of these products do consensus, replication, or transparent failover. Each holds a single-writer lease over its own data. That is a design choice. The authoritative record stays in your application: the event log Cassie replays, the history Fitz streams carry, the bytes you hand Midge. These products make that record fast to serve. None of them tries to become it.',
     },
     next: {
-      title: 'Choose a product from the documentation home.',
+      title: 'Pick the one that matches your problem.',
       primaryHref: '/docs',
-      primaryLabel: 'Choose documentation',
+      primaryLabel: 'Browse documentation',
       secondaryHref: '/midge',
       secondaryLabel: 'Explore Midge',
     },
   },
   {
     path: '/midge',
+    productId: 'midge',
     label: 'Midge',
-    title: 'Embedded Rust storage with explicit durability | Midge',
+    title: 'Durable state in your Rust process, backed by S3 | Midge',
     description:
-      'Midge is embedded Rust storage with explicit commit durability, recovery behavior, transactions, and resource limits.',
-    headline: 'Keep storage inside your Rust process.',
-    lede: 'Midge is an embedded key-value engine with explicit durability and recovery choices.',
+      'Midge is an embedded Rust key-value engine: no server, no port, no network hop. Snapshot transactions, a durability choice on every commit, and the same API on local disk or S3, Azure Blob, and GCS.',
+    headline: 'Durable state without running a database.',
+    lede: 'Midge is an embedded key-value engine for Rust. It links into your process as a library: no server, no port, no network hop between your code and your data. An LSM engine, snapshot transactions, and named keyspaces.',
     audience:
-      'For Rust engineers who want an in-process store and need to understand what each commit waited for.',
+      'For local-first and edge applications, services that need durable state without operating a database, caches and indexes that must survive a restart, and event logs an application replays on startup.',
+    workTitle: 'The decisions Midge puts in your hands',
     what: {
-      title: 'A transactional embedded engine',
-      body: 'Midge provides snapshot transactions, column families, point reads, writes, deletes, and scans over memory, local disk, or cloud-backed storage.',
+      title: 'You choose durability, per write',
+      href: '/docs/midge/durability',
+      linkLabel: 'Durability modes',
+      body: 'There is no default write option. Each commit says how durable it needs to be, from visible right away to confirmed in the cloud, and you decide per write which one to wait for.',
     },
     fit: {
-      title: 'Storage owned by one process',
-      body: 'Use Midge when a Rust application should own its storage lifecycle directly. Cassie uses Midge as its storage layer, but applications can use Midge without Cassie.',
+      title: 'The same API on a laptop or on S3',
+      href: '/docs/midge/cloud',
+      linkLabel: 'Persistence options',
+      body: 'Start in memory, stay on local disk, or target S3, Azure Blob, Google Cloud Storage, or a compatible endpoint. Cloud mode keeps a bounded local cache in front of the object store. Your storage code does not change: develop against a directory, deploy against a bucket.',
     },
     work: [
       {
-        title: 'Choose commit durability',
-        body: 'Select synchronous, buffered, best-effort, or cloud acknowledgement behavior at the write boundary.',
+        title: 'Snapshot transactions over opaque bytes',
+        body: 'Atomic multi-key commits with snapshot isolation, scoped to one column family. Keys and values are raw byte strings. Midge never parses, validates, or versions what you store.',
       },
       {
-        title: 'Read consistent snapshots',
-        body: 'Group reads and writes in transactions with a stated conflict policy.',
+        title: 'No second system to operate',
+        body: 'One process owns one database directory under a single-writer lease. Nothing to provision, no connection pool, no query planner between you and a key.',
       },
       {
-        title: 'Inspect recovery',
-        body: 'Use runtime, recovery, layout, and verification reports after open.',
+        title: 'Restart recovery is part of the engine',
+        body: "Write-ahead logging, flush, and compaction are the engine's job. What survives a crash follows directly from the durability policy each commit chose.",
       },
     ],
     boundaries: {
-      title: 'Midge is a library, not a database service',
-      body: 'The application owns schema, encoding, access control, process placement, backups, and the decision to repair or rebuild data.',
+      title: 'When to use a database server instead',
+      href: '/docs/midge',
+      linkLabel: 'When Midge fits',
+      body: 'Reach for a database server when more than one process must write the same data, when you need SQL or a query planner, when you need replication or automatic failover, or when a transaction must span two keyspaces atomically. Encoding, schema, access control, and backup scheduling stay yours. None happen by default.',
     },
     next: {
-      title: 'Commit one value and verify it after reopen.',
+      title: 'Commit your first transaction.',
       primaryHref: '/docs/midge/getting-started',
       primaryLabel: 'Get started',
       secondaryHref: '/docs/midge',
       secondaryLabel: 'Read the overview',
       repository: 'https://github.com/cntryl/midge',
+      code: `let mut engine = Engine::open(
+    OpenOptions::local("./midge-data").build()?
+)?;
+let cf = engine.get_column_family("default").unwrap();
+let mut tx = engine.begin_tx(cf.id(), TransactionMode::ReadWrite)?;
+tx.put(b"hello".to_vec(), b"world".to_vec(), None)?;
+tx.commit(WriteOptions::sync())?;`,
+      codeCaption:
+        'Opening a local directory with a synchronous commit. Swap the open options for S3, Azure Blob, or GCS and the rest of this code is unchanged.',
     },
   },
   {
     path: '/fitz',
+    productId: 'fitz',
     label: 'Fitz',
-    title: 'Messaging and coordination behind one broker | Fitz',
+    title: 'Broker, cache, job queue, and scheduler in one process | Fitz',
     description:
-      'Fitz provides related messaging and coordination models behind one single-node broker boundary.',
-    headline: 'Use one broker for related communication models.',
-    lede: 'Fitz provides notices, streams, key-value state, queues, RPC, leases, and schedules through one route model.',
+      'Fitz is one broker that replaces your cache, queue, and scheduler, with durable data in S3, Azure Blob, or GCS instead of on the box.',
+    headline: 'Your broker, cache, job queue, and scheduler, all in one process.',
+    lede: "Consolidating those usually means the guarantees blur together: the cache becomes the queue, the queue becomes the event log, and nobody can say anymore what survives a restart. Fitz doesn't blur: each kind of message keeps its own promise, in one broker.",
     audience:
-      'For application and platform teams that need several communication patterns with one broker lifecycle.',
+      "One process, but not one box's worth of data: durable domains live in S3, Azure Blob, or GCS, and the container holds only a cache. Scaling is a resize, not a migration.",
+    workTitle: 'What one broker gets you',
     what: {
-      title: 'A single-node application broker',
-      body: 'Fitz combines live fanout, durable history, current state, work delivery, requests, ownership coordination, and future timing behind one process.',
+      title: 'One broker, however you need it',
+      href: '/docs/fitz/concepts-and-routes',
+      linkLabel: 'Concepts and routes',
+      body: "Fitz gives you all of it over one connection, addressed the same way: live updates, a durable queue, a shared value, background work, direct requests. You don't stand up a separate system for each.",
     },
     fit: {
-      title: 'A boundary between applications',
-      body: 'Use Fitz when running applications need to communicate or coordinate. TypeScript and Go clients connect application code to the same broker contract.',
+      title: 'Mix patterns without extra plumbing',
+      href: '/docs/fitz/durability',
+      linkLabel: 'Durability',
+      body: "Some of what Fitz handles is ephemeral, some persists, and you can combine them freely. A scheduled job can hand off to a queue for durable retry; a stored value can raise a live update without either depending on the other's guarantees.",
     },
     work: [
       {
-        title: 'Deliver live and durable messages',
-        body: 'Choose a notice, stream, or queue according to whether work must replay or be claimed.',
+        title: 'One address shape for everything',
+        body: 'Every resource is addressed the same way, no matter what kind of message it is. One route model, one identity model, one set of operational controls.',
       },
       {
-        title: 'Coordinate running processes',
-        body: 'Use RPC, leases, and schedules for calls, bounded ownership, and future work.',
+        title: 'Clients that reconnect themselves',
+        body: 'Connect over WebSocket or TCP from TypeScript, Go, C#, or Rust. Each client heartbeats, reconnects on its own when the link drops, retries idempotent reads, and reports the state change so your connect handler can pick up from there.',
       },
       {
-        title: 'Operate one route model',
-        body: 'Use shared authentication, health, metrics, and resource reporting across domains.',
+        title: "The data isn't in the container",
+        body: 'Durable domains persist through Midge onto S3, Azure Blob, or GCS, with the broker keeping a local cache. Resize or restart the container without moving data. There is still no second storage system to deploy.',
       },
     ],
     boundaries: {
-      title: 'Fitz keeps its single-node contract visible',
-      body: 'Fitz does not provide consensus or transparent failover. Sessions are ephemeral, and clients rebuild subscriptions, workers, leases, and resume positions after reconnecting. Fitz does not require Cassie or Midge in the application.',
+      title: 'One writer, disposable compute',
+      href: '/docs/fitz/supported-boundaries',
+      linkLabel: 'Supported boundaries',
+      body: "No consensus, no replication, no transparent failover, no exactly-once delivery. One broker holds an exclusive writer lease over its data, and a restart is a visible event to every connected client. Committed state lives in object storage, so swapping the container doesn't move it. Recovery is split: the broker restores what it owns, and the client restores what it owns. The client reconnects on its own, then re-establishes its session in a connect handler. Past one process, partition by route family rather than pointing two brokers at the same data.",
     },
     next: {
-      title: 'Start a local broker and complete one operation.',
-      primaryHref: '/docs/fitz/setup',
+      title: 'Start one broker and send one message.',
+      primaryHref: '/docs/fitz/getting-started',
       primaryLabel: 'Get started',
       secondaryHref: '/docs/fitz',
       secondaryLabel: 'Read the overview',
       repository: 'https://github.com/cntryl/fitz',
+      code: `docker run --rm \\
+  -p 127.0.0.1:4090:4090 \\
+  -p 127.0.0.1:4091:4091 \\
+  -p 127.0.0.1:9090:9090 \\
+  -e FITZ_AUTH_REQUIRED=false \\
+  -e FITZ_STORAGE_MODE=local \\
+  -e FITZ_STORAGE_PATH=/data \\
+  ghcr.io/cntryl/fitz:latest`,
+      codeCaption:
+        'A local development broker: loopback-bound, authentication off, storage on a container path. A deployment sets storage to cloud mode and turns authentication on.',
     },
   },
   {
     path: '/cassie',
+    productId: 'cassie',
     label: 'Cassie',
-    title: 'SQL-queryable read models | Cassie',
+    title: 'A real SQL database for your event log | Cassie',
     description:
-      'Cassie builds SQL-queryable read models from application-owned history through a single-node query engine.',
-    headline: 'Query read models built from application history.',
-    lede: 'Cassie materializes projection data and serves it through a PostgreSQL-compatible wire protocol.',
+      'Cassie is a database with the PostgreSQL wire protocol: you create the schema, tables, and views, replay your event log into them, and query the result with psql, an existing driver, or a BI tool.',
+    headline: 'Point psql at your event log.',
+    lede: "Cassie is a database, not a magic materializer. You create the schema, the tables, and the views. Your handler replays your event log into them. Cassie stores the rows and serves them over the PostgreSQL wire protocol, so the driver and BI tool already in your stack just connect.",
     audience:
-      'For teams using CQRS or event-sourced designs that need query-shaped views of application-owned history.',
+      'For teams doing CQRS or event sourcing who want their read side to be a database they query like any other, without operating a separate cluster to hold a derived copy.',
     what: {
-      title: 'A query engine for projection data',
-      body: 'Cassie stores read-model rows and provides supported SQL, indexes, search, analytics, and query-visible errors.',
+      title: 'You push events in, and Cassie never reaches out',
+      href: '/docs/cassie/projections-and-replay',
+      linkLabel: 'Projections and replay',
+      body: 'There is no ingestion pipeline to operate and no stream for Cassie to poll. Your handler reads your event log and calls a local replay API with a batch of events, writing into the tables you defined. Three rules apply, each guarded on the Cassie side: events arrive in increasing order, or Cassie rejects the position. Each event carries a stable id, and Cassie skips ids it has already seen. Payloads are deterministic, because Cassie persists exactly what it is handed.',
     },
+    workTitle: 'A database you set up and query like any other',
     fit: {
-      title: 'A rebuildable view of owned history',
-      body: 'The application event stream remains authoritative. Cassie uses Midge for persistence and recovery while Cassie owns query planning, execution, indexes, and SQL behavior.',
+      title: 'A read model you can throw away and rebuild',
+      href: '/docs/cassie/getting-started',
+      linkLabel: 'Run the example',
+      body: "Get those three rules right and replay is repeatable: the same history produces the same rows. Rebuilding a projection from scratch is routine, not risky: drop the tables, replay, and they're right again. Nothing in Cassie is a record you'd be afraid to lose, because none of it is the record.",
     },
     work: [
       {
-        title: 'Serve familiar queries',
-        body: 'Connect a supported PostgreSQL client and run parameterized SQL against projection data.',
+        title: 'Real schema, real SQL',
+        body: 'Create tables, views, and indexes with ordinary DDL. Query them with full SQL, including joins, subqueries, and aggregation, over psql, your existing driver, or a BI client. No bespoke SDK.',
       },
       {
-        title: 'Build useful retrieval paths',
-        body: 'Use relational, text, vector, analytical, time-series, and graph-oriented read paths.',
+        title: 'Fast reads, not a second copy',
+        body: 'Scalar, full-text, vector, and time-series indexes accelerate reads. Every one sits over your rows as an accelerator, never a second copy of them.',
       },
       {
-        title: 'Rebuild with checkpoints',
-        body: 'Track projection progress, verify results, and activate repaired read models deliberately.',
+        title: 'Queries that fail instead of degrading',
+        body: 'A request can be bounded by deadline, cancellation, SQL complexity, result size, and memory. Hitting a bound returns a deterministic error with a standard SQLSTATE, not a silently truncated result.',
       },
     ],
     boundaries: {
-      title: 'Cassie is not the source of truth',
-      body: 'Cassie is a single-node read-model engine, not a distributed SQL system or an event store. External systems own routing, failover, and replay input.',
+      title: 'Cassie is a database, not the source of truth',
+      href: '/docs/cassie/product-boundaries',
+      linkLabel: 'Product boundaries',
+      body: "Cassie is not your event stream, not an OLTP database for application writes, and not a distributed SQL engine. Replication, sharding, consensus, and cross-node planning are permanent non-goals. It does not store the source log, choose batch boundaries, resolve a timestamp or generated id on your behalf, or design your schema for you. You create the tables and views; Cassie executes your SQL against them and owns everything between a submitted query and its result. Your event log stays authoritative. Cassie holds a derived copy, not the record.",
     },
     next: {
       title: 'Run the local read-model example and query it.',
@@ -200,96 +265,6 @@ export const marketingPages = [
       repository: 'https://github.com/cntryl/cassie',
     },
   },
-  {
-    path: '/tools',
-    label: 'Tools',
-    title: 'Repository validation and reporting | Cntryl Tools',
-    description:
-      'Cntryl Tools provides CLI commands for test validation, inventory generation, and benchmark reporting.',
-    headline: 'Run consistent repository checks from one CLI.',
-    lede: 'Tools validates Rust test conventions, inventories tests and benchmarks, and summarizes benchmark results.',
-    audience:
-      'For maintainers who want repeatable repository checks and report artifacts.',
-    what: {
-      title: 'A standalone Rust command-line tool',
-      body: 'The cntryl-tools executable provides validate-tests, generate-inventory, and summarize-benchmarks commands.',
-    },
-    fit: {
-      title: 'Support for development workflows',
-      body: 'Run Tools from the repository you want to inspect. It can summarize current Stress artifacts into shared benchmark reports.',
-    },
-    work: [
-      {
-        title: 'Validate tests',
-        body: 'Check Rust tests for naming and arrange-act-assert conventions.',
-      },
-      {
-        title: 'Generate inventory',
-        body: 'Scan tests and benchmarks and write an inventory report.',
-      },
-      {
-        title: 'Summarize results',
-        body: 'Normalize supported benchmark artifacts and produce JSON, Markdown, and CSV summaries.',
-      },
-    ],
-    boundaries: {
-      title: 'Tools reports on a repository',
-      body: 'Tools does not run application infrastructure. Its output reflects the checked repository and the artifacts available at command time.',
-    },
-    next: {
-      title: 'Install the CLI and validate one repository.',
-      primaryHref: '/docs/tools/getting-started',
-      primaryLabel: 'Get started',
-      secondaryHref: '/docs/tools',
-      secondaryLabel: 'Read the overview',
-      repository: 'https://github.com/cntryl/tools',
-    },
-  },
-  {
-    path: '/stress',
-    label: 'Stress',
-    title: 'Repeatable Rust performance measurement | Cntryl Stress',
-    description:
-      'Cntryl Stress defines Rust benchmarks that produce structured artifacts, diagnostics, and performance gates.',
-    headline: 'Turn Rust benchmarks into reviewable evidence.',
-    lede: 'Stress provides a small benchmark API and structured output for repeatable performance work.',
-    audience:
-      'For Rust engineers who need benchmark results that can be inspected, compared, and reported.',
-    what: {
-      title: 'A Rust benchmarking framework',
-      body: 'Stress registers benchmark functions, measures work by intent, records environment and samples, and writes machine-readable results.',
-    },
-    fit: {
-      title: 'Evidence for performance decisions',
-      body: 'Use Stress in development dependencies and benchmark targets. Tools can read current Stress artifacts and produce shared summaries.',
-    },
-    work: [
-      {
-        title: 'Define focused work',
-        body: 'Write benchmark functions that identify measured operations and structured parameters.',
-      },
-      {
-        title: 'Capture diagnostics',
-        body: 'Record samples, percentiles, allocation data, trust findings, and comparisons.',
-      },
-      {
-        title: 'Apply gates',
-        body: 'Use profiles and baseline comparisons to turn stated limits into repeatable checks.',
-      },
-    ],
-    boundaries: {
-      title: 'Stress measures the benchmark you define',
-      body: 'A structured artifact does not prove that a workload represents production. Authors still own fixtures, operation counts, environment control, and interpretation.',
-    },
-    next: {
-      title: 'Define one benchmark and inspect its artifact.',
-      primaryHref: '/docs/stress/getting-started',
-      primaryLabel: 'Get started',
-      secondaryHref: '/docs/stress',
-      secondaryLabel: 'Read the overview',
-      repository: 'https://github.com/cntryl/stress',
-    },
-  },
 ] as const satisfies readonly MarketingPageDefinition[];
 
 export type MarketingPath = (typeof marketingPages)[number]['path'];
@@ -298,8 +273,6 @@ export const repositories = [
   { name: 'midge', href: 'https://github.com/cntryl/midge' },
   { name: 'fitz', href: 'https://github.com/cntryl/fitz' },
   { name: 'cassie', href: 'https://github.com/cntryl/cassie' },
-  { name: 'tools', href: 'https://github.com/cntryl/tools' },
-  { name: 'stress', href: 'https://github.com/cntryl/stress' },
   { name: 'fitz-ts', href: 'https://github.com/cntryl/fitz-ts' },
   { name: 'fitz-go', href: 'https://github.com/cntryl/fitz-go' },
   { name: 'lexkey-rs', href: 'https://github.com/cntryl/lexkey-rs' },

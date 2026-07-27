@@ -18,13 +18,6 @@ export const docsPortals = [
   stressPortal,
 ] as const satisfies readonly DocsPortalDefinition[];
 
-export const docsNavigationGroups = [
-  { label: 'Midge', portals: [midgePortal] },
-  { label: 'Cassie', portals: [cassiePortal] },
-  { label: 'Fitz', portals: [fitzPortal] },
-  { label: 'Other', portals: [stressPortal, toolsPortal] },
-] as const;
-
 export const docsCatalog = docsPortals.flatMap((portal) =>
   portal.sections.flatMap((section) => section.pages)
 );
@@ -57,6 +50,11 @@ export function resolveDocsRoute(snapshot: {
 }) {
   const matched = snapshot.matches?.at(-1)?.path;
   return normalizeDocsRoute(matched ?? snapshot.path ?? '/docs');
+}
+
+// Joined section labels, used to preview a product's coverage.
+export function portalSectionSummary(portal: DocsPortalDefinition) {
+  return portal.sections.map((section) => section.label).join(' · ');
 }
 
 export function docsTableOfContents(page: DocsPageDefinition) {
