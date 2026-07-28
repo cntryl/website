@@ -1,14 +1,39 @@
 import { For, Show, state } from '@askrjs/askr';
-import { navigate } from '@askrjs/askr/router';
+import { navigate, onRouteChange } from '@askrjs/askr/router';
 import { on } from '@askrjs/askr/resources';
 import { SearchIcon, XIcon } from '@askrjs/lucide';
 import { Button } from '@askrjs/themes/components';
-import { docsPortals, searchDocs } from './catalog';
-import type { DocsPortalId } from './types';
+import {
+  docsManifest,
+  docsManifestPortalForRoute,
+  resolveDocsRoute,
+} from './manifest';
+import type { DocsPortalId, DocsSearchRecord } from './types';
 import { list } from '../list';
 
 type SearchChip = { id: DocsPortalId | 'all'; label: string; active: boolean };
-type SearchResult = ReturnType<typeof searchDocs>[number];
+type SearchResult = DocsSearchRecord;
+
+type SearchIndex = typeof import('./search-index');
+let searchIndexPromise: Promise<SearchIndex> | undefined;
+let latestSearchRequest = 0;
+
+function loadSearchIndex() {
+  searchIndexPromise ??= import('./search-index');
+  return searchIndexPromise;
+}
+
+function scrollToHash(hash: string) {
+  const encodedId = hash.replace(/^#/, '');
+  if (!encodedId || typeof document === 'undefined') return;
+  let id: string;
+  try {
+    id = decodeURIComponent(encodedId);
+  } catch {
+    return;
+  }
+  document.getElementById(id)?.scrollIntoView({ block: 'start' });
+}
 
 // Its own component, not inline JSX in DocsSearch's conditional: the dialog
 // only exists in the DOM while open, and its <For> calls need a hook-index
@@ -148,9 +173,22 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
   const [open, setOpen] = state(false);
   const [query, setQuery] = state('');
   const [filter, setFilter] = state<DocsPortalId | 'all'>(portalId ?? 'all');
+  const [results, setResults] = state<SearchResult[]>([]);
   const queryValue = query();
   const filterValue = filter();
-  const results = searchDocs(queryValue, filterValue);
+
+  const runSearch = (nextQuery: string, nextFilter: DocsPortalId | 'all') => {
+    const request = ++latestSearchRequest;
+    if (!nextQuery.trim()) {
+      setResults([]);
+      return;
+    }
+    void loadSearchIndex().then(({ searchDocs }) => {
+      if (request === latestSearchRequest) {
+        setResults(searchDocs(nextQuery, nextFilter));
+      }
+    });
+  };
 
   // Built fresh every render (and without .map, which this file bans) so each
   // chip's `active` flag travels with the item identity For reconciles on.
@@ -159,7 +197,7 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
     label: string;
     active: boolean;
   }[] = [{ id: 'all', label: 'All', active: filterValue === 'all' }];
-  for (const portal of docsPortals) {
+  for (const portal of docsManifest) {
     chips.push({
       id: portal.id,
       label: portal.shortLabel,
@@ -168,9 +206,11 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
   }
 
   const close = () => {
+    latestSearchRequest += 1;
     setOpen(false);
     setQuery('');
     setFilter(portalId ?? 'all');
+    setResults([]);
   };
 
   // Explicit dismissal (X, Escape, backdrop click) returns focus to the
@@ -205,8 +245,25 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
     }
     event.preventDefault();
     close();
-    navigate(href);
+    navigate(href, { scroll: 'preserve' });
   };
+
+  // The header persists while client navigation changes the active docs
+  // portal. Rescope the filter after the route commits so a Fitz result does
+  // not leave the Midge filter active when the reader switches products.
+  onRouteChange(
+    (current) => {
+      const nextPortal = docsManifestPortalForRoute(resolveDocsRoute(current));
+      const nextFilter = nextPortal?.id ?? 'all';
+      setFilter(nextFilter);
+      const nextQuery = query();
+      if (nextQuery.trim()) runSearch(nextQuery, nextFilter);
+      if (current.hash && typeof window !== 'undefined') {
+        window.setTimeout(() => scrollToHash(current.hash ?? ''), 0);
+      }
+    },
+    { immediate: true }
+  );
 
   // `on` attaches once per mounted instance and detaches automatically when
   // this component is disposed. A raw window.addEventListener in a ref
@@ -252,7 +309,7 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
         data-docs-search-trigger
         onPress={() => setOpen(true)}
         aria-haspopup="dialog"
-        aria-expanded={open()}
+        aria-expanded={open() ? 'true' : 'false'}
       >
         <SearchIcon size={16} aria-hidden="true" />
         <span>Search docs</span>
@@ -273,9 +330,15 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
         <SearchDialog
           queryValue={queryValue}
           chips={chips}
-          results={results}
-          onQueryChange={setQuery}
-          onFilterChange={setFilter}
+          results={results()}
+          onQueryChange={(value) => {
+            setQuery(value);
+            runSearch(value, filter());
+          }}
+          onFilterChange={(id) => {
+            setFilter(id);
+            runSearch(query(), id);
+          }}
           onDismiss={dismiss}
           onSelectResult={selectResult}
         />

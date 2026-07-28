@@ -6,12 +6,16 @@ import {
   docsByRoute,
   docsCatalog,
   docsPortals,
-  docsSearchRecords,
   docsTableOfContents,
   normalizeDocsRoute,
   portalForRoute,
-  searchDocs,
 } from '../src/pages/docs/catalog';
+import {
+  docsManifest,
+  docsManifestPages,
+  docsManifestPortalForRoute,
+} from '../src/pages/docs/manifest';
+import { docsSearchRecords, searchDocs } from '../src/pages/docs/search-index';
 import type { DocsPortalId } from '../src/pages/docs/types';
 import { homeJourneys } from '../src/pages/marketing/home';
 import { marketingPages } from '../src/pages/marketing/catalog';
@@ -168,7 +172,6 @@ describe('route and product catalogs', () => {
       'SidebarGroup',
       'SidebarMenuButton',
       'SidebarInset',
-      'SidebarTrigger',
     ]) {
       expect(layout, `layout should use ${part}`).toContain(part);
     }
@@ -182,8 +185,11 @@ describe('route and product catalogs', () => {
     // The product switcher is its own band below the nav, and it belongs to
     // the docs layout only — the docs index does not carry it.
     expect(layout).toContain('<DocsProductBar />');
+    expect(layout).toContain('class="docs-mobile-nav"');
+    expect(layout).toContain('aria-label="Toggle documentation navigation"');
+    expect(layout).not.toContain('SidebarTrigger');
     expect(productBar).toContain('class="docs-productbar"');
-    expect(productBar).toContain('each={list(docsPortals)}');
+    expect(productBar).toContain('each={list(docsManifest)}');
     expect(productBar).toContain('<Tab href={portal.route} match="prefix">');
     // The sidebar carries one product's sections only. The nav groups are
     // derived from portal.sections each render rather than being handed to For
@@ -193,12 +199,82 @@ describe('route and product catalogs', () => {
     expect(layout).toContain('for (const section of portal.sections)');
     expect(layout).toContain('active: page.route === activePath');
     expect(layout).toContain('active={page.active}');
-    expect(layout).toContain('portalForRoute');
+    expect(layout).toContain('docsManifestPortalForRoute');
     expect(layout).toContain(
       '<SidebarGroupLabel>{section.label}</SidebarGroupLabel>'
     );
     expect(layout).not.toContain('SectionIcon');
     expect(layout).not.toContain('docs-nav__');
+  });
+
+  it('keeps the lightweight docs manifest in parity with authored content', () => {
+    const expected = docsPortals.map((portal) => ({
+      id: portal.id,
+      label: portal.label,
+      shortLabel: portal.shortLabel,
+      kind: portal.kind,
+      route: portal.route,
+      description: portal.description,
+      repository: portal.repository,
+      sections: portal.sections.map((section) => ({
+        id: section.id,
+        label: section.label,
+        pages: section.pages.map((page) => ({
+          route: page.route,
+          title: page.title,
+          description: page.description,
+          toc: page.content.map(({ id, title }) => ({ id, title })),
+        })),
+      })),
+    }));
+    expect(docsManifest).toEqual(expected);
+    expect(docsManifestPages.map(({ route }) => route)).toEqual(
+      docsCatalog.map(({ route }) => route)
+    );
+    for (const page of docsManifestPages) {
+      expect(docsManifestPortalForRoute(page.route)?.id).toBe(
+        docsByRoute.get(page.route as `/docs${string}`)?.portalId
+      );
+      expect(page.toc.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('keeps mobile navigation, ARIA, and anchored search contracts explicit', () => {
+    const layout = readFileSync(
+      resolve(process.cwd(), 'src/pages/docs/_layout.tsx'),
+      'utf8'
+    );
+    const page = readFileSync(
+      resolve(process.cwd(), 'src/pages/docs/page.tsx'),
+      'utf8'
+    );
+    const search = readFileSync(
+      resolve(process.cwd(), 'src/pages/docs/search.tsx'),
+      'utf8'
+    );
+    const routes = readFileSync(
+      resolve(process.cwd(), 'src/pages/_routes.tsx'),
+      'utf8'
+    );
+    const productBar = readFileSync(
+      resolve(process.cwd(), 'src/pages/docs/product-bar.tsx'),
+      'utf8'
+    );
+    expect(layout).toContain('<details class="docs-mobile-nav">');
+    expect(layout).toContain(
+      '<summary aria-label="Toggle documentation navigation">'
+    );
+    expect(page).toContain("aria-selected={tab.active ? 'true' : 'false'}");
+    expect(search).toContain("aria-expanded={open() ? 'true' : 'false'}");
+    expect(search).toContain("import('./search-index')");
+    expect(search).toContain('onRouteChange');
+    expect(search).toContain("navigate(href, { scroll: 'preserve' })");
+    expect(search).toContain('decodeURIComponent');
+    expect(routes).not.toContain('./docs/catalog');
+    expect(routes).toContain("lazy(() => import('./docs/page'))");
+    expect(layout).not.toContain("from './catalog'");
+    expect(productBar).not.toContain("from './catalog'");
+    expect(search).not.toContain("from './catalog'");
   });
 
   it('renders every page through one master layout', () => {
@@ -231,7 +307,7 @@ describe('route and product catalogs', () => {
       'utf8'
     );
     expect(routes).toContain('group({ layout: MarketingLayout }');
-    expect(routes).toContain("route('/docs', DocsHome");
+    expect(routes).toContain("route('/docs', docsHome");
     // /docs is a chooser, so it must not sit inside a product sidebar group.
     const docsGroup = routes.slice(
       routes.indexOf('group({ layout: DocsLayout }')

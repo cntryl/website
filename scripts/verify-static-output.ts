@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { docsCatalog, docsPortals } from '../src/pages/docs/catalog';
 import { routeMetadata } from '../src/pages/_routes';
@@ -260,6 +260,42 @@ for (const [route, html] of documents) {
       );
     }
   }
+}
+
+// Marketing pages should ship the shared shell and manifest, but not the full
+// authored documentation corpus. Keep the initial JavaScript budget explicit
+// so a future import cannot silently pull every portal into the first paint.
+const marketingEntryRoutes = ['/', ...marketingPages.map((page) => page.path)];
+const marketingEntryAssets = new Set<string>();
+for (const route of marketingEntryRoutes) {
+  const html = documents.get(route);
+  if (!html) continue;
+  for (const match of html.matchAll(/(?:src|href)="(\/assets\/[^"?]+\.js)"/g)) {
+    marketingEntryAssets.add(match[1]!);
+  }
+}
+const marketingInitialBytes = [...marketingEntryAssets].reduce(
+  (total, asset) => total + statSync(resolve(dist, `.${asset}`)).size,
+  0
+);
+assert(
+  marketingInitialBytes <= 250_000,
+  `marketing initial JavaScript exceeds 250000 bytes: ${marketingInitialBytes}`
+);
+const portalContentMarkers = docsPortals.flatMap((portal) =>
+  portal.sections
+    .flatMap((section) => section.pages)
+    .flatMap((page) => page.content.flatMap((section) => section.paragraphs))
+    .filter((paragraph) => paragraph.length > 100)
+    .slice(0, 2)
+    .map((paragraph) => paragraph.slice(0, 48))
+);
+for (const asset of marketingEntryAssets) {
+  const source = readFileSync(resolve(dist, `.${asset}`), 'utf8');
+  assert(
+    portalContentMarkers.every((marker) => !source.includes(marker)),
+    `marketing entry asset contains full portal content: ${asset}`
+  );
 }
 
 for (const asset of ['robots.txt', 'sitemap.xml']) {

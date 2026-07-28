@@ -16,6 +16,7 @@
     "test:unit": "vp test run",
     "typecheck": "tsc --noEmit",
     "verify:static": "tsx ./scripts/verify-static-output.ts",
+    "generate:docs-manifest": "tsx ./scripts/generate-docs-manifest.ts",
     "check": "npm run fmt:check && npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run verify:static",
     "preview": "vp preview --outDir dist"
   },

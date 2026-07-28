@@ -1,8 +1,7 @@
 import { createRouteRegistry, group, lazy, route } from '@askrjs/askr/router';
 import type { RouteMeta } from '@askrjs/askr/router';
 import { DocsLayout } from './docs/_layout';
-import { docsCatalog, portalById } from './docs/catalog';
-import { DocsHome } from './docs/page';
+import { docsManifestPages, docsManifestPortalForRoute } from './docs/manifest';
 import { MarketingLayout } from './marketing/_layout';
 import {
   marketingRouteMetadata,
@@ -20,11 +19,11 @@ export const routeMetadata: Readonly<Record<string, RouteMeta>> = {
   ...marketingRouteMetadata,
   '/docs': docsHomeMetadata,
   ...Object.fromEntries(
-    docsCatalog.map((page) => [
+    docsManifestPages.map((page) => [
       page.route,
       metadataForRoute(
         page.route,
-        `${page.title} | ${portalById.get(page.portalId)!.label} | Cntryl`,
+        `${page.title} | ${docsManifestPortalForRoute(page.route)!.label} | Cntryl`,
         page.description
       ),
     ])
@@ -35,15 +34,18 @@ export const routeMetadata: Readonly<Record<string, RouteMeta>> = {
 // marketing layout. Only a product's own pages get that product's sidebar.
 function registerDocsIndexRoute() {
   group({ layout: MarketingLayout }, () => {
-    route('/docs', DocsHome, { meta: routeMetadata['/docs'] });
+    route('/docs', docsHome, { meta: routeMetadata['/docs'] });
   });
 }
+
+const docsHome = lazy(() => import('./docs/home'));
+const docsPage = lazy(() => import('./docs/page'));
 
 function registerDocsRoutes() {
   registerDocsIndexRoute();
   group({ layout: DocsLayout }, () => {
-    for (const page of docsCatalog) {
-      route(page.route, lazy(page.loader), {
+    for (const page of docsManifestPages) {
+      route(page.route, docsPage, {
         meta: routeMetadata[page.route],
       });
     }
@@ -58,30 +60,18 @@ export const routeRegistry = createRouteRegistry(() => {
 // Static generation renders route handlers directly, so settle every lazy
 // portal component before handing the registry to the SSG CLI.
 export async function createStaticRouteRegistry() {
-  const components = new Map<
-    (typeof docsCatalog)[number]['loader'],
-    ReturnType<typeof lazy>
-  >();
-
   const registry = createRouteRegistry(() => {
     registerMarketingRoutes();
     registerDocsIndexRoute();
     group({ layout: DocsLayout }, () => {
-      for (const page of docsCatalog) {
-        let component = components.get(page.loader);
-        if (!component) {
-          component = lazy(page.loader);
-          components.set(page.loader, component);
-        }
-        route(page.route, component, {
+      for (const page of docsManifestPages) {
+        route(page.route, docsPage, {
           meta: routeMetadata[page.route],
         });
       }
     });
   });
 
-  await Promise.all(
-    [...components.values()].map((component) => component.preload())
-  );
+  await Promise.all([docsHome.preload(), docsPage.preload()]);
   return registry;
 }

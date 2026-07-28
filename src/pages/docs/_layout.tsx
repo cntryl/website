@@ -12,22 +12,20 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarScope,
-  SidebarTrigger,
 } from '@askrjs/themes/components';
 import {
-  docsByRoute,
-  docsPortals,
-  docsTableOfContents,
-  portalForRoute,
+  docsManifest,
+  docsManifestByRoute,
+  docsManifestPortalForRoute,
   resolveDocsRoute,
-} from './catalog';
+} from './manifest';
 import { DocsProductBar } from './product-bar';
 import { SiteLayout } from '../site-layout';
 import { list } from '../list';
 
 // Products are the top-level tabs; the sidebar covers only the active one.
 function activePortalFor(path: string) {
-  return portalForRoute(path) ?? docsPortals[0];
+  return docsManifestPortalForRoute(path) ?? docsManifest[0];
 }
 
 function DocsNavigation({ close }: { close?: () => void }) {
@@ -88,8 +86,8 @@ function DocsNavigation({ close }: { close?: () => void }) {
 
 function TableOfContents() {
   const route = resolveDocsRoute(currentRoute());
-  const page = docsByRoute.get(route as `/docs${string}`);
-  const headings = page ? docsTableOfContents(page) : [];
+  const page = docsManifestByRoute.get(route);
+  const headings = page?.toc ?? [];
 
   // <Show>, not an early `return null`: this component persists across docs
   // navigation (it's a sibling of {children} in DocsLayout, not remounted
@@ -136,8 +134,14 @@ export function DocsLayout({ children }: Props) {
           </Sidebar>
           <SidebarInset class="docs-main">
             <div class="docs-mobile-bar">
-              <SidebarTrigger aria-label="Toggle documentation navigation" />
-              <span>{portal.label} documentation</span>
+              <details class="docs-mobile-nav">
+                <summary aria-label="Toggle documentation navigation">
+                  {portal.label} documentation
+                </summary>
+                <div class="docs-mobile-nav__content">
+                  <DocsNavigation />
+                </div>
+              </details>
             </div>
             <div class="docs-body">
               <div class="docs-content">{children}</div>
