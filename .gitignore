@@ -141,3 +141,6 @@ vite.config.ts.timestamp-*
 # Askr client and static output
 .askr/
 dist/
+
+# macOS metadata
+.DS_Store
