@@ -412,8 +412,8 @@ function clientsPage(): DocsPageInput {
       paragraphs: [
         'Every client owns startup, readiness, reconnect, and shutdown for one connection. Connect once during service startup and keep the client alive for the process lifetime; the client handles reconnecting on its own when the connection drops.',
         'What the client cannot do for you is restore your session. A reconnect establishes a brand-new session with a new session ID, and everything the previous session owned is gone on the broker side — even if the gap lasted milliseconds. Rebuilding that state is application work, and the right place for it is a connect handler that runs on every connect rather than setup code that runs once.',
-        'Committed data is unaffected. The broker recovers KV values, queue backlogs, stream records, and schedule definitions by itself; the table below covers only what you have to re-establish.',
-        'Each client sends its own heartbeat to detect a dead connection before the transport would otherwise notice: by default it pings every 10 seconds and reconnects if no response arrives within 30 seconds. Idempotent reads — KV get/scan, Stream read/readPage/peek/metadata, and Lease query — are safely retried by the client on a dropped connection, and a Queue enqueue is retried only after the broker has explicitly rejected it as a transient failure. Everything else that mutates state — KV writes, stream appends, queue reservations and acknowledgements, lease ownership changes, RPC calls, and notice publishes — is never replayed automatically, because once a request is sent the client cannot tell whether the broker already applied it before the connection dropped.',
+        'Committed data is unaffected. The broker recovers KV values, Queue backlogs, Stream records, and Schedule definitions by itself; the table below covers only what you have to re-establish.',
+        'Each client sends its own heartbeat to detect a dead connection before the transport would otherwise notice: by default it pings every 10 seconds and reconnects if no response arrives within 30 seconds. Idempotent reads — KV get/scan, Stream read/readPage/peek/metadata, and Lease query — are safely retried by the client on a dropped connection, and a Queue enqueue is retried only after the broker has explicitly rejected it as a transient failure. Everything else that mutates state — KV writes, Stream appends, Queue reservations and acknowledgements, Lease ownership changes, RPC calls, and Notice publishes — is never replayed automatically, because once a request is sent the client cannot tell whether the broker already applied it before the connection dropped.',
       ],
       table: {
         headers: ['After a reconnect, re-establish', 'Domain'],
@@ -571,7 +571,7 @@ function domainPage(
       title: 'Boundaries',
       paragraphs: [
         boundary,
-        `Fitz keeps each domain's guarantee narrow on purpose, so the fix for a workflow that needs more is to compose domains explicitly rather than expect ${title} to absorb another contract. The table below maps the cases that come up most often.`,
+        `Each ${title} domain contract is complete on its own. Applications may use another domain alongside it when they need a separate guarantee, but no domain is required to make ${title} work. The table below maps the cases that come up most often.`,
       ],
       table: detail.instead,
     },
@@ -633,7 +633,7 @@ export const fitzPortal = definePortal({
               title: 'Choose a domain',
               paragraphs: [
                 'Picking the right domain is the main design decision when adopting Fitz, and the question that settles it is what happens if a message is missed. If missing it is fine, Notice is enough. If a consumer must be able to catch up, Stream. If work must happen even when nobody is listening, Queue.',
-                'When a workflow needs more than one guarantee, compose domains explicitly rather than stretching one. Schedule firing into Queue is the canonical example: Schedule owns when work becomes due, Queue owns making sure it actually gets done.',
+                'Each domain stands on its own and provides its stated guarantee without another domain. An application may use more than one when it independently needs more than one guarantee — for example, it can use Schedule for timing intent and Queue for durable work — but neither domain is a prerequisite for the other.',
               ],
               table: {
                 headers: ['Domain', 'Use it for', 'Durable'],
@@ -681,8 +681,8 @@ export const fitzPortal = definePortal({
               title: 'What Fitz does not do',
               paragraphs: [
                 'Fitz is single-node by design. There is no consensus, no replication, and no transparent failover — one broker process owns admission, routing, domain execution, persistence, probes, metrics, and limits. Plan availability around that: a broker restart is a visible event to every connected client.',
-                'Sessions are ephemeral, and this is the single most important thing to understand before writing client code. A session exists only for the life of one connection, and a reconnect creates a brand-new session rather than resuming the old one. Subscriptions, open KV transactions, stream append sessions, held leases, and RPC worker registrations are all gone, even if the reconnect takes milliseconds.',
-                "What survives is committed data, not session state. The broker recovers KV values, queue backlogs, stream records, and schedule definitions on its own; everything session-owned is your application's job to rebuild in its reconnect handler.",
+                'Sessions are ephemeral, and this is the single most important thing to understand before writing client code. A session exists only for the life of one connection, and a reconnect creates a brand-new session rather than resuming the old one. Subscriptions, open KV transactions, Stream append sessions, held leases, and RPC worker registrations are all gone, even if the reconnect takes milliseconds.',
+                "What survives is committed data, not session state. The broker recovers KV values, Queue backlogs, Stream records, and Schedule definitions on its own; everything session-owned is your application's job to rebuild in its reconnect handler.",
               ],
               callout: {
                 title: 'Write the reconnect handler first',
@@ -894,7 +894,7 @@ export const fitzPortal = definePortal({
               id: 'resources',
               title: 'Resources',
               paragraphs: [
-                'The `resource` segment names one entity, queue, stream, or lock inside an area, but how strictly it is parsed depends on the domain. KV and Schedule enforce an exact segment count — KV rejects any route that is not exactly `realm/area/resource`, and Schedule requires exactly `realm/area/resource/operation` — while Queue, Lease, and Stream accept three or more segments and silently ignore anything past the third.',
+                'The `resource` segment names one entity, Queue, Stream, or lock inside an area, but how strictly it is parsed depends on the domain. KV and Schedule enforce an exact segment count — KV rejects any route that is not exactly `realm/area/resource`, and Schedule requires exactly `realm/area/resource/operation` — while Queue, Lease, and Stream accept three or more segments and silently ignore anything past the third.',
                 "RPC and Notice never parse a resource out at all: both store the route as an opaque string, so RPC's trailing segments are just business-logic path components, and Notice's segments after `resource` (the `event`) participate in `*`/`**` wildcard subscription matching instead of a fixed schema.",
                 "For the structured domains, authorization canonicalizes on the resource, not the literal request string: `queue://acme/jobs/email/receive` is authorized as `queue://acme/jobs/email`, and `stream://acme/events/orders/append` is authorized as `stream://acme/events/orders`. Extra segments beyond a domain's resource depth carry no authorization meaning outside RPC and Notice.",
               ],
@@ -958,7 +958,7 @@ export const fitzPortal = definePortal({
               paragraphs: [
                 "A session exists only for the lifetime of one connection. After a client sends CONNECT, the broker assigns an internal session ID, resolves a RouteFamily from the JWT's identity context through server-side configuration (or, in anonymous mode, assigns RouteFamily 1 to every connection), and tracks that session's active subscriptions, transactions, worker registrations, and leases against it.",
                 'Identity resolves along two axes that never substitute for each other: RouteFamily is a broker-internal numeric value the server resolves from the JWT, giving hard, column-family-level isolation — `RouteFamily.id()` maps 1:1 to a `ColumnFamilyId`, and `RouteFamily=0` is forbidden for persistent domains. `realm` is just an opaque, application-chosen string segment in the route path with no infrastructure meaning of its own, and the identical realm string can legitimately appear under different RouteFamilies.',
-                'Disconnect destroys every piece of session-owned state at once — subscriptions, open KV transactions, stream append sessions, held leases, RPC worker registrations, and pending RPC requests are all dropped or rolled back — and reconnecting does not resume it: a new CONNECT gets a new session ID, the previous one is permanently invalid, and the application must explicitly re-subscribe, re-begin, and re-register everything it needs.',
+                'Disconnect destroys every piece of session-owned state at once — subscriptions, open KV transactions, Stream append sessions, held leases, RPC worker registrations, and pending RPC requests are all dropped or rolled back — and reconnecting does not resume it: a new CONNECT gets a new session ID, the previous one is permanently invalid, and the application must explicitly re-subscribe, re-begin, and re-register everything it needs.',
               ],
               table: {
                 headers: [
@@ -1015,8 +1015,8 @@ export const fitzPortal = definePortal({
               title: 'Domain boundaries',
               paragraphs: [
                 'Fitz is organized into seven domains — Notice, Stream, KV, Queue, RPC, Lease, and Schedule — each occupying its own exclusive 100-code MessageType block and each owning exactly one class of guarantee: live fanout, durable replay, current state, work delivery, live execution, ownership, or timing intent.',
-                "Pick a domain by the guarantee the workflow actually needs: live notifications go to Notice, durable history to Stream, current authoritative state to KV, background work to Queue, live request/response to RPC, ownership or fencing to Lease, and future timing intent to Schedule. When a workflow needs more than one guarantee, compose domains explicitly instead of expecting one to absorb another's contract — Schedule enqueues into Queue when a fire needs durable retry, for example, rather than executing the work itself.",
-                "A domain may reference another domain's route but must never silently inherit its guarantees: Notice can tell a client that Stream has new data without attempting replay itself, and KV can emit a Notice hint on write without that hint becoming durable history. All of this runs inside one broker process — RouteFamily and realm give isolation and namespacing within it, not across machines, and the durable domains persist through Midge's LSM storage rather than any external replica.",
+                'Pick a domain by the guarantee the workflow actually needs: ephemeral live fanout signals go to Notice, durable history to Stream, current authoritative state to KV, background work to Queue, live request/response to RPC, ownership or fencing to Lease, and future timing intent to Schedule. Each choice is independently usable; select more than one only when the application separately needs more than one guarantee.',
+                "Domains never inherit one another's guarantees or require one another to function. An application can publish a Notice signal, append a Stream record, or commit a KV value as independent operations; a Notice signal is not Stream history, a Stream subscription is not Notice fanout, and a KV commit does not become an event unless application code explicitly records one. All of this runs inside one broker process — RouteFamily and realm give isolation and namespacing within it, not across machines, and the durable domains persist through Midge's LSM storage rather than any external replica.",
               ],
               table: {
                 headers: ['Domain', 'Owns', 'Durable State'],
@@ -1417,7 +1417,7 @@ export const fitzPortal = definePortal({
             },
             useFor: [
               'Notice fits any signal where the newest value makes the previous one irrelevant. Cache and view invalidation is the clearest case: a client that misses the hint and reloads a moment later still converges on the right answer.',
-              'It also fits presence and live-awareness features (who is online, what is typing, current progress on a job), and change hints that point at a durable domain — publishing "stream X has new records" so readers know to catch up, while Stream itself holds the data that must not be lost.',
+              'It also fits presence and live-awareness features (who is online, what is typing, current progress on a job), and standalone live signals whose value is only meaningful to currently connected observers. Notice does not depend on a durable domain, and it never turns a signal into history.',
             ],
             instead: {
               headers: ['If you need', 'Use'],
@@ -1450,13 +1450,13 @@ export const fitzPortal = definePortal({
           'stream',
           'Stream',
           'Use durable ordered append and replay for committed application history.',
-          'Clients persist their own resume offsets. Live subscriptions are notifications, not broker-managed durable cursors. Stream is not a competing-consumer queue.',
+          'Clients persist their own resume offsets. Stream live subscriptions emit commit signals, not broker-managed durable cursors or Notice fanout. Stream is not a competing-consumer queue.',
           ['stream', 'append', 'replay', 'offset'],
           {
             model: [
               'Stream is durable, ordered, append-only history. Records get monotonic offsets within a resource, they are never modified in place, and any reader can come back later and read the same range again and get the same bytes. This is the domain to reach for when the sequence of what happened is itself the valuable thing.',
               'Writes go through an append session: begin a session on a route, append one or more records, then commit. Records become readable to others at commit, not at append, so a partially written batch is never observable. The commit mode selects how durable the write is before the call returns.',
-              "The critical thing to understand is that Stream does not track where you are. There is no broker-managed consumer group, no committed cursor, and no acknowledgement — reads take an explicit starting offset, and remembering the next one is your application's job. Live subscriptions notify you that new records exist; they are not a durable cursor and they do not resume after a reconnect.",
+              "The critical thing to understand is that Stream does not track where you are. There is no broker-managed consumer group, no committed cursor, and no acknowledgement — reads take an explicit starting offset, and remembering the next one is your application's job. A Stream subscription emits a best-effort commit signal for new records on that Stream route; it is a Stream operation, not a Notice subscription, not a durable cursor, and it does not resume after a reconnect. Use READ with your stored offset for replay.",
             ],
             facts: {
               messageTypes: '600-699',
@@ -1472,7 +1472,7 @@ export const fitzPortal = definePortal({
               rows: [
                 [
                   'begin',
-                  'Opens an append session against one stream route. The session is session-owned and dies with the connection.',
+                  'Opens an append session against one Stream route. The session is session-owned and dies with the connection.',
                 ],
                 [
                   'append',
@@ -1488,7 +1488,7 @@ export const fitzPortal = definePortal({
                 ],
                 [
                   'subscribe',
-                  'Notifies this session that new records have arrived. A notification, not a cursor — it resumes nothing after reconnect.',
+                  'Emits a Stream-specific commit signal when new records arrive. The STREAM_NOTIFY delivery is not a Notice event or a cursor — it resumes nothing after reconnect.',
                 ],
               ],
             },
@@ -1509,7 +1509,7 @@ export const fitzPortal = definePortal({
                 ],
                 [
                   'Only the current value, not its history',
-                  'KV — reading a stream to find the latest value is the wrong shape',
+                  'KV — reading a Stream to find the latest value is the wrong shape',
                 ],
                 [
                   'Fanout with no durability cost',
@@ -1594,8 +1594,8 @@ export const fitzPortal = definePortal({
                   'Queue — a KV write is not a work item',
                 ],
                 [
-                  'To notify others cheaply that state changed',
-                  'Notice — pair a KV commit with a Notice hint',
+                  'To signal cheaply that state changed',
+                  'Notice — use independently when a separate live signal is useful; KV remains complete without it',
                 ],
               ],
             },
@@ -1675,7 +1675,7 @@ export const fitzPortal = definePortal({
                 ],
                 [
                   'Work to start at a specific future time',
-                  'Schedule, firing into Queue for durable retry',
+                  'Schedule for timing intent, or Queue for durable retry; each domain stands alone',
                 ],
               ],
             },
@@ -1694,7 +1694,7 @@ export const fitzPortal = definePortal({
           {
             model: [
               'RPC is live request and response. A worker registers itself against a route, a caller invokes that route, and the broker correlates the response frames back to the caller while both sessions stay connected. It is the only domain where the caller gets an answer.',
-              'Responses are a stream, not a single value. One call can yield many response frames, which lets a worker return progress updates or a chunked result as it produces them rather than buffering everything and replying once at the end.',
+              'Responses are a sequence, not a single value. One call can yield many correlated response frames, which lets a worker return progress updates or a chunked result as it produces them rather than buffering everything and replying once at the end.',
               'Nothing here is durable. If no worker is registered when the call arrives, the call fails immediately — it is not parked until one appears. Pending calls and registrations are session-owned, so a disconnect on either side ends them, and both the caller and the worker are responsible for retrying explicitly.',
             ],
             facts: {
@@ -1716,7 +1716,7 @@ export const fitzPortal = definePortal({
                 ],
                 [
                   'call',
-                  'Sends a request to a registered worker and returns a stream of correlated response frames. Fails if no worker is registered.',
+                  'Sends a request to a registered worker and returns a sequence of correlated response frames. Fails if no worker is registered.',
                 ],
                 [
                   'respond',
@@ -1740,7 +1740,7 @@ export const fitzPortal = definePortal({
                   'Queue — reservation redelivers; RPC does not',
                 ],
                 [
-                  'To notify many listeners at once',
+                  'To signal many listeners at once',
                   'Notice — RPC targets exactly one worker',
                 ],
                 [
@@ -1837,11 +1837,11 @@ export const fitzPortal = definePortal({
           'schedule',
           'Schedule',
           'Use durable future timing intent without turning the broker into a workflow engine.',
-          'Schedule owns when an action becomes due, not workflow graphs or durable downstream completion. Pair it with Queue when fired work needs acknowledgement and retry.',
+          'Schedule owns when an action becomes due, not workflow graphs or downstream completion. Schedule is complete as a timing primitive; an application may choose Queue separately when it also needs durable work acknowledgement and retry.',
           ['schedule', 'timing', 'future work', 'delivery mode'],
           {
             model: [
-              "Schedule owns one thing: when something becomes due. A definition names a route, a cron expression, a delivery mode, and a payload; the broker stores it and emits the payload each time it fires. It deliberately stops there — what happens to the fired work is another domain's contract.",
+              'Schedule owns one thing: when something becomes due. A definition names a route, a cron expression, a delivery mode, and a payload; the broker stores it and emits the payload each time it fires. It deliberately stops there — Schedule does not claim to complete or retry downstream work, and it does not need another domain to provide its timing guarantee.',
               'When persistence is enabled, both the definitions and the pending fire claims are durable, so a broker restart does not lose the schedule or forget that a fire was in progress. The delivery mode decides how a fire is dispatched when more than one subscriber could take it; Single hands the fire to exactly one.',
               'Schedule routes are the strictest in Fitz: exactly four segments, `realm/area/resource/operation`, with the operation carried in the route path rather than the MessageType. Anything shorter or longer is rejected before dispatch, and every operation — including subscribe — requires an exact route with no wildcards.',
             ],
@@ -1879,14 +1879,14 @@ export const fitzPortal = definePortal({
             },
             useFor: [
               'Schedule fits recurring timing intent — nightly reports, hourly reconciliation, periodic cache warming — and delayed one-shot actions like a reminder or a cleanup that should happen some time after an event.',
-              'The composition it is designed for is Schedule firing into Queue: Schedule decides that the nightly report is due, the fire enqueues a work item, and Queue provides the reservation, retry, and dead-letter handling that make the work actually get done. Keeping those two concerns separate is the point of the boundary.',
+              "Schedule is useful on its own for delivering timing signals to live subscribers. If an application also needs a durable work lifecycle, it may separately submit work to Queue; that optional composition does not change or complete Schedule's timing contract.",
             ],
             instead: {
               headers: ['If you need', 'Use'],
               rows: [
                 [
                   'Retry when the fired work fails',
-                  'Queue — fire into it rather than executing in the subscriber',
+                  'Queue — a separate domain for reservation and redelivery; Schedule itself only signals due time',
                 ],
                 [
                   'Acknowledgement that the work completed',
@@ -1904,7 +1904,7 @@ export const fitzPortal = definePortal({
             },
             callout: {
               title: 'A fire is a starting gun, not a completion',
-              body: 'Schedule guarantees that the payload is emitted when due; it does not track whether the resulting work succeeded, and it will not retry it. A subscriber that receives a fire and then crashes has consumed the only signal for that occurrence. When the work must actually complete, have the fire enqueue into Queue and let reservation and redelivery own the outcome.',
+              body: 'Schedule guarantees that the payload is emitted when due; it does not track whether the resulting work succeeded, and it will not retry it. A subscriber that receives a fire and then crashes has consumed the only signal for that occurrence. An application that also needs completion tracking may use Queue as a separate operation, but Schedule remains usable without it.',
             },
           }
         ),
@@ -2802,7 +2802,7 @@ export const fitzPortal = definePortal({
               },
               callout: {
                 title: 'Notice publish never reports backpressure',
-                body: "Notice is fire-and-forget by design: a delivery attempt against a full subscriber mailbox is retried up to 200 times with a thread yield between attempts, and if the mailbox is still full the broker drops the notification and increments the fitz_notice_delivery_drops_total counter -- with no error returned to the publisher and no signal to the subscriber that anything was missed. Every other domain in this section returns a caller-visible error when its limit is hit; Notice's publish path does not, and that is intentional, not something application code needs to route around.",
+                body: "Notice is fire-and-forget by design: a delivery attempt against a full subscriber mailbox is retried up to 200 times with a thread yield between attempts, and if the mailbox is still full the broker drops the Notice delivery and increments the fitz_notice_delivery_drops_total counter -- with no error returned to the publisher and no signal to the subscriber that anything was missed. Every other domain in this section returns a caller-visible error when its limit is hit; Notice's publish path does not, and that is intentional, not something application code needs to route around.",
               },
             },
           ],
@@ -3198,7 +3198,7 @@ export const fitzPortal = definePortal({
               paragraphs: [
                 "Durable Fitz storage is Midge-backed: local mode writes to disk at `FITZ_STORAGE_PATH`, cloud mode keeps a local cache in front of provider object storage, and every domain's actual durability still depends on its own write policy, not just the storage mode. Startup registers each storage-backed domain and validates or preloads its durable state before the broker reports ready - Queue validates persisted queue state and applies its fast-mode remnant cleanup, Schedule preloads persisted definitions and pending fire claims, and KV and Stream attach storage-backed sinks - while Notice, RPC, and Lease intentionally start with empty live state.",
                 'Use the authenticated stats and metrics endpoints to see resource pressure before it becomes an outage: `GET /api/v1/{family}/metrics` and `/api/v1/all/metrics` return structured JSON scoped to one route family or the whole broker, `GET /api/v1/stats` reports connection and per-domain counts, and the dedicated Prometheus listener on `FITZ_METRICS_BIND_ADDR:FITZ_METRICS_PORT` (default `127.0.0.1:9090`) stays unauthenticated and separate from the admin API on purpose. Watch rising rejection counts by realm, mailbox depth saturation, and repeated permission-denied or route-mismatch bursts as the operational signals that precede a hard resource limit.',
-                "Resource limits - connection counts per realm, subscription and wildcard pattern counts, queue and stream depth, memory quotas for sessions and runtime buffers - are enforced by the broker itself and can't be raised from the client side; escalation is a realm-scoped rate limit, more compute, or more durable storage throughput, applied by an operator, not a client retry policy. `FITZ_MIN_MEMORY_BYTES` (default 128 MiB) is a startup preflight floor, not a running limit, and a broker that fails preflight never gets far enough to expose any of the stats above.",
+                "Resource limits - connection counts per realm, subscription and wildcard pattern counts, Queue and Stream depth, memory quotas for sessions and runtime buffers - are enforced by the broker itself and can't be raised from the client side; escalation is a realm-scoped rate limit, more compute, or more durable storage throughput, applied by an operator, not a client retry policy. `FITZ_MIN_MEMORY_BYTES` (default 128 MiB) is a startup preflight floor, not a running limit, and a broker that fails preflight never gets far enough to expose any of the stats above.",
               ],
               table: {
                 headers: [
@@ -3691,7 +3691,7 @@ export const fitzPortal = definePortal({
                   [
                     'Schedule',
                     'cron, next_run, definitions preloaded at boot',
-                    'execution notifications (session-scoped delivery)',
+                    'execution fire deliveries (session-scoped)',
                   ],
                 ],
               },
@@ -3762,7 +3762,7 @@ export const fitzPortal = definePortal({
                   ['Held leases', 'Released'],
                   ['RPC worker registrations', 'Cleared'],
                   ['Pending RPC requests', 'Discarded'],
-                  ['Queued notifications', 'Discarded'],
+                  ['Queued delivery state', 'Discarded'],
                 ],
               },
               code: '# Authenticated mode\n[0x01]                    (MessageType=1, CONNECT)\n[0x00 0x63]               (Length=99, u16 BE)\n[...99 bytes of JWT...]\n\n# Anonymous mode: still a valid CONNECT, empty value\n[0x01]\n[0x00 0x00]               (Length=0)\n(no JWT bytes)',
@@ -3817,7 +3817,7 @@ export const fitzPortal = definePortal({
               paragraphs: [
                 'Every domain response begins with a single status byte — 0 for success, 1 for error — that a client must inspect before touching the rest of the payload: on success the remaining bytes are the domain-specific success payload, on error they are a u32 BE length-prefixed UTF-8 error message. RPC is the one domain that carries a 16-byte correlation_id (a client-generated UUID) on both REQUEST and its matching response so a client can match several concurrent in-flight calls to their results; no other domain carries a correlation id.',
                 'Domains multiplex as independent logical channels on one connection — a KV PUT and a Notice PUBLISH can be in flight at the same time because they route to different domain handlers — but within a single domain, responses arrive in the order requests were sent, and sending a second request of the same type before the first response arrives is undefined behavior unless that domain has correlation ids, which only RPC does. Session-scoped operations, such as Stream APPEND after a Stream BEGIN, address an opaque session_id returned by the setup call instead of repeating the full route on every message.',
-                'There is no protocol-level backpressure frame: a broker signals a full internal queue through an ordinary domain error response (RPC returns 6003 ERR_RPC_BACKPRESSURE, Queue returns 4005 ERR_QUEUE_FULL), and a client is expected to pause, back off, and retry the operation itself. Notice PUBLISH sits outside this contract entirely — it is fire-and-forget with no response frame, so a broker under backpressure silently drops notifications and a publisher has no way to observe the drop.',
+                'There is no protocol-level backpressure frame: a broker signals a full internal queue through an ordinary domain error response (RPC returns 6003 ERR_RPC_BACKPRESSURE, Queue returns 4005 ERR_QUEUE_FULL), and a client is expected to pause, back off, and retry the operation itself. Notice PUBLISH sits outside this contract entirely — it is fire-and-forget with no response frame, so a broker under backpressure silently drops Notice deliveries and a publisher has no way to observe the drop.',
               ],
               table: {
                 headers: ['Status byte', 'Meaning', 'Payload that follows'],
@@ -3841,7 +3841,7 @@ export const fitzPortal = definePortal({
               title: 'Domain messages',
               paragraphs: [
                 'Each domain owns an exclusive 100-code block of MessageType values, and every message_id is an exact wire contract rather than just a numeric range: each one has a fixed domain, direction, route scheme, and authorization kind, and wire codes are append-only — once assigned to a domain and verb, an id is never reused for something else.',
-                "A handful of message types are server-to-client only and cannot be sent by a client: KV NOTIFY (111), Queue NOTIFY (209), Lease NOTIFY (409), Notice NOTIFY (504), Stream NOTIFY (609), Schedule NOTIFY (705), and RPC's delivery id (305). RPC has a further asymmetry built from this: a worker sends RESPONSE (303) to the broker, but the broker delivers the matching result to the original caller as message 305, correlated back by the correlation_id from the caller's original REQUEST (302) rather than by forwarding 303 unchanged.",
+                "NOTIFY is a wire direction and operation name, not a cross-domain guarantee. A handful of message types are server-to-client only and cannot be sent by a client: KV NOTIFY (111), Queue NOTIFY (209), Lease NOTIFY (409), Notice NOTIFY (504), Stream NOTIFY (609), Schedule NOTIFY (705), and RPC's delivery id (305). Each belongs to the domain block that owns its code: Notice NOTIFY is Notice fanout, while Stream NOTIFY is only a Stream commit signal for a Stream subscription. Neither one turns the other domain into a different delivery or durability model. RPC has a further asymmetry built from this: a worker sends RESPONSE (303) to the broker, but the broker delivers the matching result to the original caller as message 305, correlated back by the correlation_id from the caller's original REQUEST (302) rather than by forwarding 303 unchanged.",
                 "A message_id sitting inside a domain's numeric block is not automatically valid: id 304 is explicitly rejected as an unsupported RPC operation, and any id in 100–799 with no manifest entry at all is rejected the same way (\"unsupported message type\") even though it falls inside a domain's range. Clients cannot infer support for a message type from its numeric block alone — the manifest's fixed id list, not the range, is what a given deployment actually accepts.",
               ],
               table: {
@@ -3954,7 +3954,7 @@ export const fitzPortal = definePortal({
               paragraphs: [
                 "Each domain owns exactly one guarantee set and never inherits another's: Notice guarantees live fanout to subscribers connected when delivery is computed, Stream guarantees ordered durable append and replay from client-supplied offsets, and KV guarantees transactional correctness for current state in one resource scope. Queue guarantees at-least-once delivery under its configured write policy, RPC guarantees correlated dispatch to one live worker with bounded pending queues, Lease guarantees one live holder per identity with in-process fencing tokens, and Schedule guarantees that persisted definitions and pending fire claims survive restart once their acknowledgement boundary is reached.",
                 'Pick a domain by the question the interaction is actually asking: Stream answers what happened, KV answers what is true now, Queue answers who should work on this, RPC answers who can answer this now, Lease answers who owns this now, and Schedule answers when this should happen later.',
-                'A domain composing with another never absorbs its contract: a KV change may publish an invalidation hint through Notice without that hint making the KV change durable as an event, and Schedule may enqueue work into Queue when a definition fires without Schedule becoming a worker runtime.',
+                "Domains are independently usable and never absorb one another's contracts: KV remains current state whether or not an application emits a separate Notice signal, and Schedule remains timing intent whether or not an application submits separate work to Queue. If an application combines domains, each operation retains only the guarantee of the domain that owns it.",
               ],
               table: {
                 headers: [
@@ -4030,7 +4030,7 @@ export const fitzPortal = definePortal({
                   ],
                   [
                     'Schedule subscriptions',
-                    'Re-send fire subscriptions; the durable definition remains on the broker, but the live notification subscription does not.',
+                    'Re-send fire subscriptions; the durable definition remains on the broker, but the live fire subscription does not.',
                   ],
                   [
                     'KV transactions',
@@ -4044,8 +4044,8 @@ export const fitzPortal = definePortal({
               title: 'Application ownership',
               paragraphs: [
                 'Everything the broker will not rebuild automatically is an explicit application responsibility: re-subscribing, re-registering RPC workers, reacquiring leases, resuming Stream reads from client-persisted offsets, and beginning a fresh KV transaction, all performed again after every reconnect.',
-                "Apply the same ownership to delivery semantics: Queue's at-least-once guarantee means the application de-duplicates or makes handlers idempotent, RPC's lack of durable retries means the caller decides whether to retry a lost call, and Schedule's due-time-only contract means the application pairs a definition with a Queue enqueue if fired work needs acknowledgement and retry.",
-                'Fitz domains enforce mechanics, not policy — retry counts, escalation rules, multi-step ordering, and checkpoint retention are application decisions that live outside the primitive, and combining two domains such as Notice with Stream, or Schedule with Queue, must stay an explicit dual operation in application code rather than a hidden broker behavior.',
+                "Apply the same ownership to delivery semantics: Queue's at-least-once guarantee means the application de-duplicates or makes handlers idempotent, RPC's lack of durable retries means the caller decides whether to retry a lost call, and Schedule's due-time-only contract means the application decides whether any downstream work should be submitted separately.",
+                "Fitz domains enforce mechanics, not policy — retry counts, escalation rules, multi-step ordering, and checkpoint retention are application decisions that live outside the primitive. Applications may issue independent operations against Notice, Stream, Schedule, or any other domain, but no cross-domain step is hidden or required for a domain's stated functionality.",
               ],
               code: "// Reconnect authenticates a brand-new broker session; nothing above survives it.\nawait client.connect();\nawait notice.subscribe(route, onOrderEvent);                                // Notice: resubscribe\nawait lease.acquire(leaseRoute, 30);                                         // Lease: reacquire ownership\nconst tx = await kv.begin(kvRoute, { mode: 'ReadWrite', durability: 'Sync' }); // KV: start a fresh transaction",
             },

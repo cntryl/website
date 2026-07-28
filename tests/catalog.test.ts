@@ -608,6 +608,91 @@ describe('editorial contracts', () => {
     }
   });
 
+  it('keeps Fitz domain guarantees and protocol signals distinct', () => {
+    const fitzDomainContracts = {
+      notice: [
+        'no durable history',
+        'use stream for history',
+        'queue for durable work',
+      ],
+      stream: [
+        'durable, ordered, append-only history',
+        'not a notice subscription',
+        'not a competing-consumer queue',
+      ],
+      kv: [
+        'current state, not immutable history',
+        'stream when the sequence of changes must be durable and replayable',
+        'a kv write is not a work item',
+      ],
+      queue: [
+        'work lifecycle, not broadcast fanout',
+        'delivery is not exactly once',
+        'queue delivers each item once',
+      ],
+      rpc: [
+        'live request and response',
+        'not a durable retry queue',
+        'notice — rpc targets exactly one worker',
+      ],
+      lease: [
+        'which process currently owns this thing',
+        'not distributed consensus',
+        'queue — reservation already gives exclusivity per item',
+      ],
+      schedule: [
+        'when something becomes due',
+        'not workflow graphs',
+        'queue — a separate domain for reservation and redelivery',
+      ],
+    } as const;
+
+    for (const [domain, expectedPhrases] of Object.entries(
+      fitzDomainContracts
+    )) {
+      const page = docsByRoute.get(
+        `/docs/fitz/domains/${domain}` as `/docs${string}`
+      );
+      expect(page, domain).toBeDefined();
+      const text = JSON.stringify(page).toLowerCase();
+      for (const phrase of expectedPhrases) {
+        expect(text, `${domain}: ${phrase}`).toContain(phrase);
+      }
+      expect(text, `${domain}: standalone contract`).toContain(
+        `${domain} domain contract is complete on its own`
+      );
+    }
+
+    const concepts = JSON.stringify(
+      docsByRoute.get('/docs/fitz/concepts-and-routes')
+    );
+    expect(concepts).toContain('Each choice is independently usable');
+    expect(concepts).toContain(
+      'a Notice signal is not Stream history, a Stream subscription is not Notice fanout'
+    );
+
+    const wire = JSON.stringify(docsByRoute.get('/docs/fitz/wire-protocol'));
+    expect(wire).toContain(
+      'NOTIFY is a wire direction and operation name, not a cross-domain guarantee'
+    );
+    expect(wire).toContain('Notice NOTIFY is Notice fanout');
+    expect(wire).toContain(
+      'Stream NOTIFY is only a Stream commit signal for a Stream subscription'
+    );
+
+    const fitzText = JSON.stringify(
+      docsPortals.find((portal) => portal.id === 'fitz')
+    ).toLowerCase();
+    for (const forbiddenImplication of [
+      'canonical example',
+      'the composition it is designed for',
+      'pair a kv commit with a notice hint',
+      'schedule firing into queue is',
+    ]) {
+      expect(fitzText).not.toContain(forbiddenImplication);
+    }
+  });
+
   it('uses the Askr GitHub logo for visual GitHub links', () => {
     const components = [
       'src/pages/marketing/_layout.tsx',
