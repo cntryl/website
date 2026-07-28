@@ -1,5 +1,4 @@
-# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
 
-Sitemap: https://cntryl.com/sitemap-index.xml
+Sitemap: https://cntryl.com/sitemap.xml

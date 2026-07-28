@@ -1,46 +1,23 @@
 # Cntryl Website
 
-The official website for Cntryl /Fitz - a unified messaging platform.
+The static marketing and product-documentation site for Fitz, Cassie, Midge,
+and the Fitz TypeScript and Go clients.
 
-## Getting Started
+## Local development
 
-### Prerequisites
-
-- Node.js (v18 or higher)
-- npm or yarn
-
-### Installation
+Requires Node.js 20.19 or later.
 
 ```bash
-npm install
-```
-
-### Development
-
-```bash
+npm ci
 npm run dev
 ```
 
-Visit `http://localhost:4321` to view the site.
+## Verification
 
-### Build
+`npm run check` is the release gate. It checks formatting, linting, types,
+catalog and editorial contracts, the browser build, static generation, and the
+generated GitHub Pages output.
 
-```bash
-npm run build
-```
+## Publishing
 
-### Preview
-
-```bash
-npm run preview
-```
-
-## Tech Stack
-
-- [Astro](https://astro.build) - Static site framework
-- [Tailwind CSS](https://tailwindcss.com) - Utility-first CSS framework
-- [Astro Icon](https://www.astroicon.dev) - Icon component library
-
-## License
-
-Copyright © 2025 cntryl. All rights reserved.
+Publishing is intentionally manual through the repository's `Deploy` workflow.
