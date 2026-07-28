@@ -1663,7 +1663,7 @@ export const fitzPortal = definePortal({
               rows: [
                 [
                   'Every consumer to receive every message',
-                  'Notice or Stream — Queue delivers each item once',
+                  'Notice or Stream — Queue gives each item to one active consumer at a time, with at-least-once redelivery',
                 ],
                 [
                   'A result returned to the caller',

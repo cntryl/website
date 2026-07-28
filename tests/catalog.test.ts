@@ -628,7 +628,7 @@ describe('editorial contracts', () => {
       queue: [
         'work lifecycle, not broadcast fanout',
         'delivery is not exactly once',
-        'queue delivers each item once',
+        'one active consumer at a time, with at-least-once redelivery',
       ],
       rpc: [
         'live request and response',
