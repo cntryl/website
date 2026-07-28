@@ -326,7 +326,7 @@ export function DocsSearch({ portalId }: { portalId?: DocsPortalId } = {}) {
           calls need a real control boundary to get their own stable hook-index
           sequence. A plain ternary doesn't establish one, so the first mount
           throws "Hook order violation" the moment the dialog opens. */}
-      <Show when={open}>
+      <Show when={open()}>
         <SearchDialog
           queryValue={queryValue}
           chips={chips}

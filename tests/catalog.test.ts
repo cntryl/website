@@ -266,6 +266,7 @@ describe('route and product catalogs', () => {
     );
     expect(page).toContain("aria-selected={tab.active ? 'true' : 'false'}");
     expect(search).toContain("aria-expanded={open() ? 'true' : 'false'}");
+    expect(search).toContain('<Show when={open()}>');
     expect(search).toContain("import('./search-index')");
     expect(search).toContain('onRouteChange');
     expect(search).toContain("navigate(href, { scroll: 'preserve' })");
