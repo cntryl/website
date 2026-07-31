@@ -1008,7 +1008,6 @@ export const fitzPortal = definePortal({
                 title: 'Reconnect is not resume',
                 body: 'A reconnect is a brand-new session with a brand-new session ID, not a continuation of the old one. Nothing session-owned — subscriptions, worker registrations, held leases, or open transactions — survives across the gap, even if the client reconnects within milliseconds; only the domains with independent durable state (KV, Queue, Stream, Schedule) let the broker recover anything, and what it recovers is the committed data, never the session itself.',
               },
-              code: '[0x01]                    (MessageType=1, CONNECT)\n[0x00 0x63]               (Length=99, u16)\n[99 bytes of compact JWT, UTF-8, no length prefix]',
             },
             {
               id: 'domain-boundaries',
@@ -1391,7 +1390,7 @@ export const fitzPortal = definePortal({
               'Notice routes are opaque strings, which makes it the most flexible domain to address. Subscriptions may use `*` to match one segment and `**` to match the remainder, so a single subscription can follow a whole area. Publishes must name an exact route.',
             ],
             facts: {
-              messageTypes: '500-504',
+              messageTypes: '500-599',
               routeShape: 'Any depth — the route is an opaque string',
               wildcards: '* and ** in subscriptions; publishes must be exact',
               durableState: 'None',
@@ -2601,7 +2600,7 @@ export const fitzPortal = definePortal({
               paragraphs: [
                 'BootConfig and IngressConfig fix two connection ceilings and one frame ceiling at compile time: 10,000 concurrent connections shared across the broker, and a 1,048,576-byte (1 MiB) maximum for the whole multiplexed frame the transport reads before handing it to the TLV decoder.',
                 "The HTTP/WebSocket listener layers a second, tighter semaphore on top of the global one: max_connections divided by four and rounded up, then clamped to 1-1,024, so with the default 10,000-connection budget the HTTP/WebSocket path tops out at 1,024 concurrent sockets while the raw TCP listener can still use the full 10,000. Inside a frame, one TLV record's value is separately capped at 65,535 bytes by the u16 length prefix in the wire format, independent of the outer 1 MiB frame budget.",
-                'None of max_connections, max_frame_size, or the transport-to-runtime channel capacity is wired to an environment variable in the shipped fitz binary -- main.rs boots with BootConfig::new() and takes the compiled defaults; changing any of the three means embedding Fitz as a library and calling with_max_connections, with_frame_size, or with_channel_capacity directly.',
+                'None of max_connections, max_frame_size, or the transport-to-runtime channel capacity is wired to an environment variable in the shipped fitz binary today -- they are compiled-in defaults (10,000 connections, 1 MiB frames, a 1,000-message channel capacity), and there is currently no supported way to change any of the three short of building your own binary against a different configuration.',
               ],
               table: {
                 headers: ['Limit', 'Default', 'Scope'],
@@ -2946,7 +2945,7 @@ export const fitzPortal = definePortal({
               id: 'plan-the-change',
               title: 'Plan the change',
               paragraphs: [
-                "Fitz ships no migration tool: a migration is an operator-planned change to one broker's route-family configuration, admin API paths, wire protocol, or storage format, scoped against the compatibility rules in format-compatibility.md and the release notes required by release-policy.md before any node is touched.",
+                "Fitz ships no migration tool: a migration is an operator-planned change to one broker's route-family configuration, admin API paths, wire protocol, or storage format. Two rules bound what's safe before any node is touched: message-type range assignments stay stable once released -- a domain's reserved block is never reassigned or renumbered later -- and any storage-format change needs a documented upgrade path, not a silent rewrite. A release that carries compatibility risk needs migration notes, and a change to stored data, wire behavior, or deployment config needs rollback instructions before it ships.",
                 "Use this step to classify the change as additive, behavioral, or breaking. Real breaking changes in Fitz's history show the scope this can reach: moving to server-side route-family resolution required token issuers to emit identity context and stop emitting the legacy fitz.route_family, fitz.permissions, and JWT realm/areas/scopes claims, removed the FITZ_AUTH_ALLOW_JWT_ROUTE_FAMILY variable entirely (a broker still configured with it now refuses to start), and a later change moved admin domain routes from /api/v1/{domain}/... to /api/v1/{family}/{domain}/..., with the old domain-first paths returning 404.",
                 'Because Fitz does not coordinate a rolling state transfer between nodes, the plan has to size a bounded per-node maintenance window rather than a live cutover, and nothing in the repository sequences that window for you.',
               ],
@@ -3396,6 +3395,11 @@ export const fitzPortal = definePortal({
                     'FITZ_ADMIN_PASSWORD_HASH',
                     'Unset',
                     'Argon2 password hash required together with a username for protected admin login.',
+                  ],
+                  [
+                    'FITZ_ADMIN_JWT_SECRET',
+                    'Generated per process',
+                    'Signs protected-admin session cookies. Set a stable secret only when admin sessions must survive a process restart.',
                   ],
                   [
                     'FITZ_ADMIN_SESSION_TTL_SECS',

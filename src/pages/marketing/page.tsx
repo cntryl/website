@@ -1,7 +1,7 @@
 import { For, Show } from '@askrjs/askr';
 import { currentRoute, Link } from '@askrjs/askr/router';
+import { GitHubLogo } from '@askrjs/logos';
 import {
-  Badge,
   Button,
   Card,
   CardDescription,
@@ -16,7 +16,6 @@ import {
 } from './catalog';
 import { list } from '../list';
 import { ProductMark } from '../docs/product-mark';
-import { GitHubLink } from '../site-header';
 
 // Nobody's meant to notice these — a hover on the hero mark, nothing more.
 const productMarkJoke: Record<string, string> = {
@@ -29,9 +28,9 @@ const productMarkJoke: Record<string, string> = {
 function CalloutLink({ callout }: { callout: MarketingCallout }) {
   if (!callout.href || !callout.linkLabel) return null;
   return (
-    <Badge asChild variant="outline">
+    <Button asChild variant="ghost" size="sm">
       <Link href={callout.href}>{callout.linkLabel}</Link>
-    </Badge>
+    </Button>
   );
 }
 
@@ -77,11 +76,14 @@ export function MarketingPage() {
                   </Button>
                   {'repository' in page.next && page.next.repository ? (
                     <Button asChild variant="ghost" size="sm">
-                      <GitHubLink
+                      <a
                         href={page.next.repository}
-                        size={15}
-                        compact={false}
-                      />
+                        aria-label={`${page.label} on GitHub`}
+                        title="GitHub"
+                      >
+                        <GitHubLogo size={15} aria-hidden="true" />
+                        <span>GitHub</span>
+                      </a>
                     </Button>
                   ) : null}
                 </div>

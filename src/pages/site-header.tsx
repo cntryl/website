@@ -80,7 +80,13 @@ export function SiteHeader({ portalId }: { portalId?: DocsPortalId } = {}) {
           <NavGroup align="end">
             <DocsSearch portalId={portalId} />
             <Button asChild variant="ghost" size="icon">
-              <GitHubLink />
+              <a
+                href="https://github.com/cntryl"
+                aria-label="Cntryl on GitHub"
+                title="GitHub"
+              >
+                <GitHubLogo size={18} aria-hidden="true" />
+              </a>
             </Button>
             <SiteThemeToggle />
           </NavGroup>

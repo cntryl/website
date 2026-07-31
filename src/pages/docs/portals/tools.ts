@@ -350,7 +350,7 @@ Found 12 benches/stress in 3 files`,
               id: 'normalization',
               title: 'Normalization',
               paragraphs: [
-                'Every record, from either adapter, is normalized into one BenchmarkRecord shape: id, adapter, suite, case, an optional scenario, metric, unit, value, optional lower/upper bounds and sample count, a metric_direction (lower-is-better or higher-is-better), a stability classification, a status, an optional rel_stddev, and free-form tags/metadata. For the criterion adapter the metric is always latency_ns (lower is better); the stress adapter can additionally emit throughput_ops_per_s, latency_p95_ns, ns_per_op, allocs_per_op, and bytes_per_op depending on what the stress artifact recorded.',
+                'Every record, from either adapter, is normalized into one common shape: id, adapter, suite, case, an optional scenario, metric, unit, value, optional lower/upper bounds and sample count, a metric_direction (lower-is-better or higher-is-better), a stability classification, a status, an optional rel_stddev, and free-form tags/metadata. For the criterion adapter the metric is always latency_ns (lower is better); the stress adapter can additionally emit throughput_ops_per_s, latency_p95_ns, ns_per_op, allocs_per_op, and bytes_per_op depending on what the stress artifact recorded.',
                 'Stability is derived from rel_stddev against three thresholds, and status collapses to "authoritative" whenever stability lands in the two acceptable buckets; otherwise status is set to the stability string itself so a noisy or untrustworthy record cannot masquerade as authoritative.',
               ],
               table: {
@@ -516,6 +516,7 @@ Promoted config/bench_baseline.json (baseline).`,
               title: 'Global options',
               paragraphs: [
                 'Every subcommand takes its own flags; there are no options shared above the subcommand level. --root defaults to the current directory everywhere it appears.',
+                'test-watchdog\'s selection flags run one integration-test binary at a time: --suite <NAME> targets the single tests/<name>.rs binary, or pass --all to run every one found under tests/. --pattern <SUBSTRING> is a plain substring filter, not a regex, applied to "{suite}::{test_name}" after listing that suite\'s tests, so only matching tests run.',
               ],
               table: {
                 headers: ['Command', 'Flags'],
@@ -553,6 +554,7 @@ Promoted config/bench_baseline.json (baseline).`,
               title: 'Repository inputs',
               paragraphs: [
                 'validate-docs, validate-benchmarks, and check-module-sizes read policy from .cntryl/repository.toml (or the path passed to --config); if the file is absent, each command falls back to built-in defaults rather than failing.',
+                "Four fields don't have prose elsewhere on this page: [docs].exclude_paths lists paths validate-docs skips entirely when walking for markdown files. [benchmarks].not_pr_gate_phrase, when set, must appear somewhere in the configured documentation files listed just above it -- validate-benchmarks fails if the phrase is missing from that prose; this check is separate from, and unrelated to, the workflow_dispatch/pull_request check against the configured workflow file. [module_sizes].warn_lines is a soft threshold: check-module-sizes prints a warning for any file over this line count but does not fail the check. [module_sizes].legacy_allowlist is a second exemption list, distinct from allowlist, for files exempted specifically from the hard max_lines failure.",
               ],
               code: `[docs]
 required = ["README.md", "docs/README.md"]
@@ -620,6 +622,7 @@ legacy_allowlist = []`,
               paragraphs: [
                 'validate-tests --json <PATH> writes a plain array of results, one object per test found, each with file, test, line, line_count, and issues (an empty array means compliant).',
                 'summarize-benchmarks always writes target/bench_results.json: a single object with schema_version (currently 2), generated_at, commit_hash (from git rev-parse HEAD in --root, or null if that fails), comparison_summary, and records, the full normalized list.',
+                "comparison_summary's fields each answer a specific question: performance_changes counts every record with a computable delta against the baseline; improved and regressions (with critical marking the more severe regression tier) count deltas that cross the warning or critical regression threshold, direction-normalized per metric; stability_regressions and stability_improvements count records whose stability crossed the authoritative-quality line between baseline and current; new and missing count records present only in the current run or only in the baseline; risk_areas counts measurement notes flagging insufficient data or noisy or untrustworthy stability; authoritative is true only when every current record passes both the authoritative-status and authoritative-stability checks; and baseline_available reports whether a baseline file was found and loaded at all.",
               ],
               codeTabs: [
                 {
@@ -802,7 +805,7 @@ legacy_allowlist = []`,
               id: 'report-failures',
               title: 'Report failures',
               paragraphs: [
-                'summarize-benchmarks refuses to load a baseline whose schema_version does not match the current BENCHMARK_MANIFEST_SCHEMA_VERSION (2): "unsupported baseline schema_version N in config/bench_baseline.json; expected 2". Delete or regenerate the baseline rather than editing its schema_version by hand.',
+                'summarize-benchmarks refuses to load a baseline whose schema_version does not match the current schema version (2): "unsupported baseline schema_version N in config/bench_baseline.json; expected 2". Delete or regenerate the baseline rather than editing its schema_version by hand.',
                 'A stress artifact with the wrong schema fails the same way at the adapter level: "unsupported stress schema in <path>: schema_version=<value>; expected cntryl-stress.v2". This is deliberate: stale or foreign artifact shapes are rejected instead of silently normalized, so a mismatch means the stress harness version producing latest.json needs to be upgraded (or the target/stress directory cleared) before summarize-benchmarks will read it.',
               ],
             },

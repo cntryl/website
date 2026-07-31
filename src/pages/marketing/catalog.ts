@@ -223,7 +223,7 @@ tx.commit(WriteOptions::sync())?;`,
     headline: 'Point psql at your event log.',
     lede: 'Cassie is a database, not a magic materializer. You create the schema, the tables, and the views. Your handler replays your event log into them. Cassie stores the rows and serves them over the PostgreSQL wire protocol, so the driver and BI tool already in your stack just connect.',
     audience:
-      'For teams doing CQRS or event sourcing who want their read side to be a database they query like any other, without operating a separate cluster to hold a derived copy.',
+      'For teams that want to query the data their app already produces, with the SQL client, driver, or BI tool they already have, without standing up and syncing a separate database, search cluster, and vector store.',
     what: {
       title: 'You push events in, and Cassie never reaches out',
       href: '/docs/cassie/projections-and-replay',

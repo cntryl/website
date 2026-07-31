@@ -22,19 +22,19 @@
     "preview": "vp preview --outDir dist"
   },
   "dependencies": {
-    "@askrjs/askr": "0.0.77",
+    "@askrjs/askr": "0.0.84",
     "@askrjs/logos": "^0.0.5",
-    "@askrjs/lucide": "0.0.5",
-    "@askrjs/themes": "0.0.16",
-    "@askrjs/ui": "0.0.20"
+    "@askrjs/lucide": "0.0.6",
+    "@askrjs/themes": "0.0.19",
+    "@askrjs/ui": "0.0.23"
   },
   "devDependencies": {
-    "@askrjs/cli": "0.0.15",
-    "@askrjs/vite": "0.0.8",
+    "@askrjs/cli": "0.0.17",
+    "@askrjs/vite": "0.0.10",
     "@types/node": "^26.1.2",
     "tsx": "4.23.1",
     "typescript": "^7.0.2",
-    "vite-plus": "0.2.6"
+    "vite-plus": "0.2.7"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

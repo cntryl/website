@@ -346,8 +346,7 @@ input {
   margin-top: var(--ak-space-lg);
 }
 
-.prose-stack > [data-slot='button'],
-.prose-stack > [data-slot='badge'] {
+.prose-stack > [data-slot='button'] {
   margin-top: var(--ak-space-lg);
 }
 
