@@ -1,4 +1,5 @@
-import { Case, For, Match, Show, state } from '@askrjs/askr';
+import { state } from '@askrjs/askr';
+import { Case, For, Match, Show } from '@askrjs/askr/control';
 import { currentRoute, Link } from '@askrjs/askr/router';
 import { GitHubLogo } from '@askrjs/logos';
 import { ArrowLeftIcon, ArrowRightIcon, CopyIcon } from '@askrjs/lucide';

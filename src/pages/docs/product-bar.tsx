@@ -1,4 +1,4 @@
-import { For } from '@askrjs/askr';
+import { For } from '@askrjs/askr/control';
 import { Container, Tab, Tabs } from '@askrjs/themes/components';
 import { docsManifest } from './manifest';
 import { list } from '../list';

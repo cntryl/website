@@ -32,7 +32,7 @@ export const marketingRouteMetadata: Readonly<Record<string, RouteMeta>> = {
   ),
 };
 
-export function registerMarketingRoutes() {
+export function registerMarketingRoutes(includeFallback = true) {
   group({ layout: MarketingLayout }, () => {
     route('/', HomePage, { meta: marketingRouteMetadata['/'] });
     for (const page of marketingPages) {
@@ -41,7 +41,7 @@ export function registerMarketingRoutes() {
       });
     }
     route('/404', NotFoundPage, { meta: marketingRouteMetadata['/404'] });
-    fallback(NotFoundPage);
+    if (includeFallback) fallback(NotFoundPage);
   });
 }
 

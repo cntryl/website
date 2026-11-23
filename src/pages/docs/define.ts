@@ -8,20 +8,18 @@ export function definePortal(input: DocsPortalInput): DocsPortalDefinition {
   const sections = input.sections.map((section) => ({
     id: section.id,
     label: section.label,
-    pages: section.pages.map(
-      (page): DocsPageDefinition => ({
-        route: (page.path
-          ? `${input.route}/${page.path}`
-          : input.route) as `/docs${string}`,
-        portalId: input.id,
-        sectionId: section.id,
-        title: page.title,
-        description: page.description,
-        keywords: page.keywords ?? [],
-        content: page.content!,
-        loader: input.loader,
-      })
-    ),
+    pages: section.pages.map((page): DocsPageDefinition => ({
+      route: (page.path
+        ? `${input.route}/${page.path}`
+        : input.route) as `/docs${string}`,
+      portalId: input.id,
+      sectionId: section.id,
+      title: page.title,
+      description: page.description,
+      keywords: page.keywords ?? [],
+      content: page.content!,
+      loader: input.loader,
+    })),
   }));
 
   const pages = sections.flatMap((section) => section.pages);

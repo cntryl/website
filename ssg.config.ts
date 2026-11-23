@@ -25,10 +25,17 @@ function renderDocument({ appHtml, context }: DocumentRenderArgs) {
     serializeRouteMeta(metadata)
   );
 
-  return document.replace(
+  const rendered = document.replace(
     '<div id="app"></div>',
     `<div id="app">${appHtml}</div>`
   );
+
+  const styles = (context.styles ?? [])
+    .map(
+      (style) => `<style data-askr-style="${style.id}">${style.cssText}</style>`
+    )
+    .join('');
+  return styles ? rendered.replace('</head>', `${styles}</head>`) : rendered;
 }
 
 export const staticConfig = {

@@ -1,4 +1,4 @@
-import { For, Show } from '@askrjs/askr';
+import { For, Show } from '@askrjs/askr/control';
 import { currentRoute, Link } from '@askrjs/askr/router';
 import { GitHubLogo } from '@askrjs/logos';
 import {
