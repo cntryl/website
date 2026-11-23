@@ -1169,14 +1169,14 @@ pre code,
   border-top: 1px solid var(--ak-color-border);
 }
 
-.docs-index__product h2 {
+[data-docs-product] h2 {
   margin: var(--ak-space-lg) 0 0;
   font-size: var(--ak-font-size-2xl);
   letter-spacing: -0.02em;
   line-height: var(--ak-line-height-tight);
 }
 
-.docs-index__product p {
+[data-docs-product] p {
   margin: var(--ak-space-sm) 0 0;
   color: var(--ak-color-text-muted);
   line-height: var(--ak-line-height-relaxed);
@@ -1188,7 +1188,7 @@ pre code,
   letter-spacing: 0.01em;
 }
 
-.docs-index__actions {
+[data-docs-actions] {
   margin-top: var(--ak-space-lg);
   flex-wrap: wrap;
 }

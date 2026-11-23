@@ -1,4 +1,4 @@
-import { For } from '@askrjs/askr';
+import { For } from '@askrjs/askr/control';
 import { Link } from '@askrjs/askr/router';
 import { Button, Container, Grid } from '@askrjs/themes/components';
 import { list } from '../list';

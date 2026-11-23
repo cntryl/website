@@ -13,7 +13,7 @@ import {
   NavLink,
 } from '@askrjs/themes/components';
 import { ThemeToggle } from '@askrjs/themes/theme';
-import { For } from '@askrjs/askr';
+import { For } from '@askrjs/askr/control';
 import { DocsSearch } from './docs/search';
 import type { DocsPortalId } from './docs/types';
 import { marketingPages } from './marketing/catalog';

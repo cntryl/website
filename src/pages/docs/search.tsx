@@ -1,4 +1,5 @@
-import { For, Show, state } from '@askrjs/askr';
+import { state } from '@askrjs/askr';
+import { For, Show } from '@askrjs/askr/control';
 import { navigate, onRouteChange } from '@askrjs/askr/router';
 import { on } from '@askrjs/askr/resources';
 import { SearchIcon, XIcon } from '@askrjs/lucide';

@@ -20,17 +20,15 @@ export const docsSearchRecords: readonly DocsSearchRecord[] =
     };
     return [
       pageRecord,
-      ...page.content.map(
-        (section): DocsSearchRecord => ({
-          route: page.route,
-          anchor: section.id,
-          title: section.title,
-          description: page.title,
-          portalId: page.portalId,
-          portalLabel: portal.label,
-          terms: [...page.keywords, ...section.paragraphs],
-        })
-      ),
+      ...page.content.map((section): DocsSearchRecord => ({
+        route: page.route,
+        anchor: section.id,
+        title: section.title,
+        description: page.title,
+        portalId: page.portalId,
+        portalLabel: portal.label,
+        terms: [...page.keywords, ...section.paragraphs],
+      })),
     ];
   });
 
