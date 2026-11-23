@@ -29,7 +29,7 @@
     "@askrjs/ui": "0.0.23"
   },
   "devDependencies": {
-    "@askrjs/cli": "0.0.17",
+    "@askrjs/cli": "0.5.1",
     "@askrjs/vite": "0.0.10",
     "@types/node": "^26.1.2",
     "tsx": "4.23.1",
