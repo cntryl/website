@@ -1,4 +1,4 @@
-import { For } from '@askrjs/askr';
+import { For } from '@askrjs/askr/control';
 import { Link } from '@askrjs/askr/router';
 import { Block, Button, Container, Grid } from '@askrjs/themes/components';
 import { docsManifest, docsManifestPortalById } from './manifest';
@@ -24,17 +24,12 @@ function ProductBlock({ portalId }: { portalId: DocsPortalId; key?: string }) {
   const pages = portal.sections.flatMap((section) => section.pages);
   const firstGuide = pages[1];
   return (
-    <Block
-      class="docs-index__product"
-      as="article"
-      direction="column"
-      align="start"
-    >
+    <Block data-docs-product as="article" direction="column" align="start">
       <ProductMark portalId={portal.id} size="lg" />
       <h2>{portal.label}</h2>
       <p>{portal.description}</p>
       <p class="docs-index__sections">{portalSectionSummary(portal)}</p>
-      <Block class="docs-index__actions" direction="row" gap="sm">
+      <Block data-docs-actions direction="row" gap="sm">
         <Button asChild size="sm">
           <Link href={portal.route}>Read the docs</Link>
         </Button>

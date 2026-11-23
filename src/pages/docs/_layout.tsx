@@ -1,4 +1,5 @@
-import { For, Show, type Props } from '@askrjs/askr';
+import type { Props } from '@askrjs/askr';
+import { For, Show } from '@askrjs/askr/control';
 import { currentRoute, Link } from '@askrjs/askr/router';
 import {
   Container,

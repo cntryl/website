@@ -61,7 +61,7 @@ export const routeRegistry = createRouteRegistry(() => {
 // portal component before handing the registry to the SSG CLI.
 export async function createStaticRouteRegistry() {
   const registry = createRouteRegistry(() => {
-    registerMarketingRoutes();
+    registerMarketingRoutes(false);
     registerDocsIndexRoute();
     group({ layout: DocsLayout }, () => {
       for (const page of docsManifestPages) {
